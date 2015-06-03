@@ -10,7 +10,7 @@ import org.broadinstitute.hellbender.utils.read.MutableGATKRead;
 
 
 public class GoogleGenomicsReadToGATKRead extends PTransform<PCollection<Read>, PCollection<MutableGATKRead>> {
-
+    private static final long serialVersionUID = 1L;
     @Override
     public PCollection<MutableGATKRead> apply( PCollection<Read> input ) {
         return input.apply(ParDo.of(new DoFn<Read, MutableGATKRead>() {
@@ -18,6 +18,6 @@ public class GoogleGenomicsReadToGATKRead extends PTransform<PCollection<Read>, 
             public void processElement( ProcessContext c ) throws Exception {
                 c.output(new GoogleGenomicsReadToGATKReadAdapter(c.element()));
             }
-        })); //.setCoder(GoogleGenomicsReadToGATKReadAdapter.CODER);
+        })).setName("GoogleGenomicsReadToGATKRead");
     }
 }

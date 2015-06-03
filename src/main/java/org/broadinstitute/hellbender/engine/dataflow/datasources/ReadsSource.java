@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.engine.dataflow.datasources;
 import com.google.api.services.genomics.model.Read;
 import com.google.api.services.storage.Storage;
 import com.google.cloud.dataflow.sdk.Pipeline;
+import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.genomics.dataflow.readers.bam.BAMIO;
 import com.google.cloud.genomics.dataflow.readers.bam.ReadBAMTransform;

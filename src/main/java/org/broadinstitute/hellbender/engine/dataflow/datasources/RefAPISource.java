@@ -14,35 +14,35 @@ import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.reference.ReferenceBases;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ReferenceSource {
 
-    public static final int REFERENCE_SHARD_SIZE = 100000;
+public class RefAPISource implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    private final String referenceName;
-    private final Genomics genomicsService;
-    private final Map<String, String> referenceNameToIdTable;
+    public static int REFERENCE_SHARD_SIZE = 100000;
 
-    public ReferenceSource( final String referenceName, final PipelineOptions pipelineOptions ) {
-        this.referenceName = referenceName;
-        this.genomicsService = createGenomicsService(pipelineOptions);
-        this.referenceNameToIdTable = buildReferenceNameToIdTable(getReferenceSet());
-    }
+    private transient Genomics genomicsService;
 
-    public static int getShardIDForInterval( final Locatable l ) {
+    public RefAPISource() { }
+
+    public static int getShardIDForInterval(final Locatable l) {
         return l.getStart() / REFERENCE_SHARD_SIZE;
     }
 
-    public ReferenceBases getReferenceBases( final SimpleInterval interval ) {
-        if ( ! referenceNameToIdTable.containsKey(interval.getContig()) ) {
+    public ReferenceBases getReferenceBases(final PipelineOptions pipelineOptions, final RefAPIMetadata apiData, final SimpleInterval interval) {
+        if (genomicsService == null) {
+            genomicsService = createGenomicsService(pipelineOptions);
+        }
+        if ( !apiData.getReferenceNameToIdTable().containsKey(interval.getContig()) ) {
             throw new IllegalArgumentException("Contig " + interval.getContig() + " not in our set of reference names for this reference source");
         }
 
         try {
-            final Genomics.References.Bases.List listRequest = genomicsService.references().bases().list(referenceNameToIdTable.get(interval.getContig()));
+            final Genomics.References.Bases.List listRequest = genomicsService.references().bases().list(apiData.getReferenceNameToIdTable().get(interval.getContig()));
             listRequest.setStart((long)interval.getStart() - 1);
             listRequest.setEnd((long)interval.getEnd() - 1);
 
@@ -54,7 +54,7 @@ public class ReferenceSource {
         }
     }
 
-    private Genomics createGenomicsService( final PipelineOptions pipelineOptions ) {
+    private static Genomics createGenomicsService( final PipelineOptions pipelineOptions ) {
         try {
             final GenomicsFactory.OfflineAuth auth = GenomicsOptions.Methods.getGenomicsAuth(pipelineOptions.as(GCSOptions.class));
             return auth.getGenomics(auth.getDefaultFactory());
@@ -67,16 +67,15 @@ public class ReferenceSource {
         }
     }
 
-    private ReferenceSet getReferenceSet() {
+    public static Map<String, String> buildReferenceNameToIdTable(final PipelineOptions pipelineOptions, final String referenceName) {
+        Genomics genomicsService = createGenomicsService(pipelineOptions);
+        final ReferenceSet referenceSet;
         try {
-            return genomicsService.referencesets().get(referenceName).execute();
+            referenceSet = genomicsService.referencesets().get(referenceName).execute();
         }
         catch ( IOException e ) {
             throw new UserException("Could not load reference set for reference name " + referenceName, e);
         }
-    }
-
-    private Map<String, String> buildReferenceNameToIdTable( final ReferenceSet referenceSet ) {
         final Map<String, String> referenceNameToIdTable = new HashMap<>();
 
         try {
@@ -85,11 +84,11 @@ public class ReferenceSource {
                 referenceNameToIdTable.put(reference.getName(), reference.getId());
             }
         }
+
         catch ( IOException e ) {
             throw new UserException("Error while looking up references for reference set " + referenceSet.getId(), e);
         }
 
         return referenceNameToIdTable;
     }
-
 }

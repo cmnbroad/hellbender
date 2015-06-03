@@ -1,5 +1,8 @@
 package org.broadinstitute.hellbender.utils.reference;
 
+import com.google.cloud.dataflow.sdk.coders.AvroCoder;
+import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
+import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 
@@ -14,6 +17,33 @@ public class ReferenceBases implements Serializable {
     public ReferenceBases( final byte[] bases, final SimpleInterval interval ) {
         this.bases = bases;
         this.interval = interval;
+    }
+
+    @Override
+    public String toString() {
+        return "ReferenceBases{" +
+                "bases=" + Arrays.toString(bases) +
+                ", interval=" + interval +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ReferenceBases that = (ReferenceBases) o;
+
+        if (!Arrays.equals(getBases(), that.getBases())) return false;
+        return getInterval().equals(that.getInterval());
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(getBases());
+        result = 31 * result + getInterval().hashCode();
+        return result;
     }
 
     public byte[] getBases() {

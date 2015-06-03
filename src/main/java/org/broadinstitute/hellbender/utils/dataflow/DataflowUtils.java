@@ -8,20 +8,25 @@ import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.util.GcsUtil;
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath;
-import com.google.cloud.dataflow.sdk.transforms.join.KeyedPCollectionTuple;
-import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.genomics.dataflow.utils.DataflowWorkarounds;
-import com.google.cloud.dataflow.sdk.values.TupleTag;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.hellbender.engine.ReadsDataSource;
 import org.broadinstitute.hellbender.engine.dataflow.coders.GATKReadCoder;
 import org.broadinstitute.hellbender.engine.dataflow.coders.UUIDCoder;
+import org.broadinstitute.hellbender.engine.dataflow.coders.VariantCoder;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadContextData;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPIMetadata;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.RefAPISource;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReferenceShard;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.GoogleGenomicsReadToGATKReadAdapter;
 import org.broadinstitute.hellbender.utils.read.MutableGATKRead;
 import org.broadinstitute.hellbender.utils.read.SAMRecordToGATKReadAdapter;
+import org.broadinstitute.hellbender.utils.reference.ReferenceBases;
+import org.broadinstitute.hellbender.utils.variant.SkeletonVariant;
+import org.broadinstitute.hellbender.utils.variant.Variant;
+import org.broadinstitute.hellbender.utils.variant.VariantContextVariantAdapter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,12 +53,24 @@ public final class DataflowUtils {
 
     public static void registerGATKCoders( final Pipeline p ) {
         DataflowWorkarounds.registerGenomicsCoders(p);
+        p.getCoderRegistry().registerCoder(ReferenceShard.class, ReferenceShard.CODER);
         p.getCoderRegistry().registerCoder(GATKRead.class, new GATKReadCoder<GATKRead>());
         p.getCoderRegistry().registerCoder(MutableGATKRead.class, new GATKReadCoder<MutableGATKRead>());
         p.getCoderRegistry().registerCoder(GoogleGenomicsReadToGATKReadAdapter.class, GoogleGenomicsReadToGATKReadAdapter.CODER);
         p.getCoderRegistry().registerCoder(SAMRecordToGATKReadAdapter.class, SerializableCoder.of(SAMRecordToGATKReadAdapter.class));
         p.getCoderRegistry().registerCoder(SimpleInterval.class, SerializableCoder.of(SimpleInterval.class));
         p.getCoderRegistry().registerCoder(UUID.class, UUIDCoder.CODER);
+
+        p.getCoderRegistry().registerCoder(Variant.class, new VariantCoder());
+        //p.getCoderRegistry().registerCoder(Variant.class, SerializableCoder.of(VariantContextVariantAdapter.class));
+        p.getCoderRegistry().registerCoder(VariantContextVariantAdapter.class, SerializableCoder.of(VariantContextVariantAdapter.class));
+        p.getCoderRegistry().registerCoder(SkeletonVariant.class, SerializableCoder.of(SkeletonVariant.class));
+        //p.getCoderRegistry().registerCoder(Variant.class, SerializableCoder.of(SkeletonVariant.class));
+        p.getCoderRegistry().registerCoder(RefAPISource.class, SerializableCoder.of(RefAPISource.class));
+        p.getCoderRegistry().registerCoder(RefAPIMetadata.class, SerializableCoder.of(RefAPIMetadata.class));
+        p.getCoderRegistry().registerCoder(ReferenceBases.class, SerializableCoder.of(ReferenceBases.class));
+        p.getCoderRegistry().registerCoder(ReadContextData.class, SerializableCoder.of(ReadContextData.class));
+
     }
 
     /**
@@ -125,17 +142,6 @@ public final class DataflowUtils {
             }
         }
     }
-
-    // TODO: refactor this please
-    public static <K, T, U> Pair<KeyedPCollectionTuple<K>, Pair<TupleTag<T>, TupleTag<U>>>
-        makeKeyedPCollectionTuple( final PCollection<KV<K, T>> first, final PCollection<KV<K, U>> second ) {
-
-        final TupleTag<T> firstTag = new TupleTag<>();
-        final TupleTag<U> secondTag = new TupleTag<>();
-        final KeyedPCollectionTuple<K> tuple = KeyedPCollectionTuple.of(firstTag, first).and(secondTag, second);
-        return Pair.of(tuple, Pair.of(firstTag, secondTag));
-    }
-
 
     /**
      * Serializes the collection's single object to the specified file.

@@ -18,7 +18,7 @@ import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.SmallBamWriter;
 import org.broadinstitute.hellbender.engine.ReadsDataSource;
-import org.broadinstitute.hellbender.engine.dataflow.ReadsSource;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsSource;
 import org.broadinstitute.hellbender.tools.IntegrationTestSpec;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;

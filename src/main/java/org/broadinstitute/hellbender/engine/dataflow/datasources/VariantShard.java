@@ -1,17 +1,20 @@
 package org.broadinstitute.hellbender.engine.dataflow.datasources;
 
+import com.google.cloud.dataflow.sdk.coders.AvroCoder;
+import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
 import htsjdk.samtools.util.Locatable;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by davidada on 5/15/15.
- */
+@DefaultCoder(AvroCoder.class)
 public final class VariantShard {
     private int shardNumber;
     private String contig;
+    static public final int VARIANTSHARDSIZE = 100000;
 
+    private VariantShard() {}
     public VariantShard(int shardNumber, String contig) {
         this.shardNumber = shardNumber;
         this.contig = contig;
@@ -24,8 +27,7 @@ public final class VariantShard {
 
         VariantShard that = (VariantShard) o;
 
-        if (getShardNumber() != that.getShardNumber()) return false;
-        return getContig().equals(that.getContig());
+        return getShardNumber() == that.getShardNumber() && getContig().equals(that.getContig());
 
     }
 
@@ -49,14 +51,21 @@ public final class VariantShard {
       * May have some bugs...
       */
     static public List<VariantShard> getVariantShardsFromInterval(final Locatable location) {
-        final int variantShardSize = 100000;
         List<VariantShard> intervalList = new ArrayList<>();
         // Get all of the shard numbers that span the start and end of the interval.
-        int startShard = location.getStart()/variantShardSize;
-        int endShard = location.getEnd()/variantShardSize;
+        int startShard = location.getStart()/VARIANTSHARDSIZE;
+        int endShard = location.getEnd()/VARIANTSHARDSIZE;
         for (int i = startShard; i <= endShard; ++i) {
             intervalList.add(new VariantShard(i, location.getContig()));
         }
         return intervalList;
+    }
+
+    @Override
+    public String toString() {
+        return "VariantShard{" +
+                "shardNumber=" + shardNumber +
+                ", contig='" + contig + '\'' +
+                '}';
     }
 }

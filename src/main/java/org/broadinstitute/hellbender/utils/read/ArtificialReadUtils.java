@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.utils.read;
 
+import com.google.cloud.genomics.dataflow.readers.bam.ReadConverter;
 import htsjdk.samtools.*;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.Utils;
@@ -58,8 +59,8 @@ public final class ArtificialReadUtils {
 
         for (int i = 0; i < groupCount; i++) {
             final SAMReadGroupRecord groupRecord = header.getReadGroup(readGroups.get(i).getId());
-            groupRecord.setPlatform(DEFAULT_PLATFORM_PREFIX + ((i % 2)+1));
-            groupRecord.setPlatformUnit(DEFAULT_PLATFORM_UNIT_PREFIX + ((i % 3)+1));
+            groupRecord.setPlatform(DEFAULT_PLATFORM_PREFIX + ((i % 2) + 1));
+            groupRecord.setPlatformUnit(DEFAULT_PLATFORM_UNIT_PREFIX + ((i % 3) + 1));
         }
         return header;
     }
@@ -79,17 +80,7 @@ public final class ArtificialReadUtils {
         return header;
     }
 
-    /**
-     * Create an artificial read based on the parameters.  The cigar string will be *M, where * is the length of the read
-     *
-     * @param header         the SAM header to associate the read with
-     * @param name           the name of the read
-     * @param refIndex       the reference index, i.e. what chromosome to associate it with
-     * @param alignmentStart where to start the alignment
-     * @param length         the length of the read
-     * @return the artificial read
-     */
-    public static MutableGATKRead createArtificialRead(SAMFileHeader header, String name, int refIndex, int alignmentStart, int length) {
+    private static SAMRecord createArtificialSAMRecord(SAMFileHeader header, String name, int refIndex, int alignmentStart, int length) {
         if ((refIndex == SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX && alignmentStart != SAMRecord.NO_ALIGNMENT_START) ||
                 (refIndex != SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX && alignmentStart == SAMRecord.NO_ALIGNMENT_START))
             throw new IllegalArgumentException("Invalid alignment start for artificial read, start = " + alignmentStart);
@@ -114,6 +105,23 @@ public final class ArtificialReadUtils {
             record.setReadUnmappedFlag(true);
         }
 
+        return record;
+    }
+    /**
+     * Create an artificial read based on the parameters.  The cigar string will be *M, where * is the length of the read
+     *
+     * @param header         the SAM header to associate the read with
+     * @param name           the name of the read
+     * @param refIndex       the reference index, i.e. what chromosome to associate it with
+     * @param alignmentStart where to start the alignment
+     * @param length         the length of the read
+     * @return the artificial read
+     */
+    public static MutableGATKRead createArtificialRead(SAMFileHeader header, String name, int refIndex, int alignmentStart, int length) {
+        if ((refIndex == SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX && alignmentStart != SAMRecord.NO_ALIGNMENT_START) ||
+                (refIndex != SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX && alignmentStart == SAMRecord.NO_ALIGNMENT_START))
+            throw new IllegalArgumentException("Invalid alignment start for artificial read, start = " + alignmentStart);
+        SAMRecord record = createArtificialSAMRecord(header, name, refIndex, alignmentStart, length);
         return new SAMRecordToGATKReadAdapter(record);
     }
 
@@ -239,6 +247,66 @@ public final class ArtificialReadUtils {
     public static MutableGATKRead createRandomRead(int length) {
         SAMFileHeader header = createArtificialSamHeader();
         return createRandomRead(header, length);
+    }
+
+    public static MutableGATKRead createRandomRead(int start, int length) {
+        List<CigarElement> cigarElements = new LinkedList<>();
+        cigarElements.add(new CigarElement(length, CigarOperator.M));
+        Cigar cigar = new Cigar(cigarElements);
+        MutableGATKRead artificialRead = ArtificialReadUtils.createArtificialRead(cigar);
+        artificialRead.setPosition(artificialRead.getContig(), start);
+        return artificialRead;
+    }
+
+    public static MutableGATKRead createRandomRead(int start, int length, int UUIDSeed) {
+        List<CigarElement> cigarElements = new LinkedList<>();
+        cigarElements.add(new CigarElement(length, CigarOperator.M));
+        Cigar cigar = new Cigar(cigarElements);
+        MutableGATKRead artificialRead = ArtificialReadUtils.createArtificialRead(cigar);
+        artificialRead.setPosition(artificialRead.getContig(), start);
+        // We know that a SAMRecordToGATKReadAdapter is backing the MutableGATKRead at this point.
+        SAMRecordToGATKReadAdapter sam = (SAMRecordToGATKReadAdapter) artificialRead;
+        sam.setUUID(new UUID(UUIDSeed, UUIDSeed));
+        return artificialRead;
+    }
+
+    public static MutableGATKRead createRandomGoogleRead(int start, int length, int UUIDSeed) {
+        List<CigarElement> cigarElements = new LinkedList<>();
+        cigarElements.add(new CigarElement(length, CigarOperator.M));
+        Cigar cigar = new Cigar(cigarElements);
+        final SAMFileHeader header = createArtificialSamHeader();
+
+        //int length = cigar.getReadLength();
+
+        byte [] base = {'A'};
+        byte [] qual = {30};
+        byte [] bases = Utils.arrayFromArrayWithLength(base, length);
+        byte [] quals = Utils.arrayFromArrayWithLength(qual, length);
+        String name = "default_read";
+        int refIndex = 0;
+        int alignmentStart = 10000;
+        //createArtificialRead(header, 0, 10000, bases, quals, cigar.toString());
+        //MutableGATKRead rec = createArtificialRead(header, name, refIndex, alignmentStart, bases, qual);
+        if (bases.length != qual.length) {
+            throw new IllegalArgumentException("Passed in read string is different length then the quality array");
+        }
+
+        //MutableGATKRead rec = createArtificialRead(header, name, refIndex, alignmentStart, bases.length);
+        //if (refIndex == -1) {
+        //    rec.setIsUnmapped();
+        //}
+        //if ((refIndex == SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX && alignmentStart != SAMRecord.NO_ALIGNMENT_START) ||
+        //        (refIndex != SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX && alignmentStart == SAMRecord.NO_ALIGNMENT_START))
+        //    throw new IllegalArgumentException("Invalid alignment start for artificial read, start = " + alignmentStart);
+
+        SAMRecord rec = createArtificialSAMRecord(header, name, refIndex, alignmentStart, length);
+        rec.setCigar(cigar);
+
+        GoogleGenomicsReadToGATKReadAdapter record = new GoogleGenomicsReadToGATKReadAdapter(ReadConverter.makeRead(rec));
+        record.setBases(Arrays.copyOf(bases, bases.length));
+        record.setBaseQualities(Arrays.copyOf(qual, qual.length));
+        record.setAttribute(SAMTag.PG.name(), new SAMReadGroupRecord("x").getId());
+        return record;
     }
 
     public static MutableGATKRead createRandomRead(SAMFileHeader header, int length, boolean allowNs) {

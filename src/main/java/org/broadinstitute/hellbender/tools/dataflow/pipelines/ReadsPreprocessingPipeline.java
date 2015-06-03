@@ -10,32 +10,42 @@ import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.cmdline.argumentcollections.IntervalArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalIntervalArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.programgroups.ReadProgramGroup;
+import org.broadinstitute.hellbender.dev.pipelines.bqsr.SmallBamWriter;
 import org.broadinstitute.hellbender.engine.dataflow.*;
-import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadContextData;
-import org.broadinstitute.hellbender.engine.dataflow.datasources.ReadsSource;
-import org.broadinstitute.hellbender.engine.dataflow.transforms.GoogleReadToRead;
+import org.broadinstitute.hellbender.engine.dataflow.datasources.*;
 import org.broadinstitute.hellbender.engine.dataflow.transforms.composite.AddContextDataToRead;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationArgumentCollection;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationTables;
 import org.broadinstitute.hellbender.tools.recalibration.covariates.StandardCovariateList;
 import org.broadinstitute.hellbender.utils.GenomeLocSortedSet;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
-import org.broadinstitute.hellbender.utils.read.Read;
-import org.broadinstitute.hellbender.utils.read.ReadUtils;
+import org.broadinstitute.hellbender.utils.read.MutableGATKRead;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+
+@CommandLineProgramProperties(
+        usage = "It's a pipeline!",
+        usageShort = "Preprocess all the things",
+        programGroup = ReadProgramGroup.class
+)
 public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
 
     @Argument(doc = "uri for the input bam, either a local file path or a gs:// bucket path",
             shortName = StandardArgumentDefinitions.INPUT_SHORT_NAME, fullName = StandardArgumentDefinitions.INPUT_LONG_NAME,
             optional = false)
     protected String bam;
+
+    @Argument(doc = "", shortName = "O", fullName = "output", optional = false)
+    protected String output;
 
     @Argument(doc = "", shortName = "R", fullName = "reference", optional = false)
     protected String referenceName;
@@ -54,17 +64,23 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
                                                                                                  getAllIntervalsForReference(readsHeader.getSequenceDictionary());
 
         final PCollectionView<SAMFileHeader> headerSingleton = pipeline.apply(Create.of(readsHeader)).setCoder(SerializableCoder.of(SAMFileHeader.class)).apply(View.<SAMFileHeader>asSingleton());
-        final PCollection<com.google.api.services.genomics.model.Read> rawReads = readsSource.getReadPCollection(intervals);
+        final PCollection<MutableGATKRead> initialReads = readsSource.getReadPCollection(intervals);
 
-        final PCollection<Read> initialReads = rawReads.apply(new GoogleReadToRead());
+        final PCollection<MutableGATKRead> markedReads = initialReads.apply(new MarkDuplicatesStub(headerSingleton));
 
-        final PCollection<Read> markedReads = initialReads.apply(new MarkDuplicatesStub(headerSingleton));
+        final VariantsFileSource variantsFileSource = new VariantsFileSource(baseRecalibrationKnownVariants, pipeline);
 
-        final PCollection<KV<Read, ReadContextData>> readsWithContext = markedReads.apply(new AddContextDataToRead(referenceName, baseRecalibrationKnownVariants, pipeline));
+        RefAPISource refAPISource = new RefAPISource();
+        Map<String, String> referenceNameToIdTable = RefAPISource.buildReferenceNameToIdTable(pipeline.getOptions(), referenceName);
+        RefAPIMetadata refAPIMetadata = new RefAPIMetadata(referenceName, referenceNameToIdTable);
+
+        final PCollection<KV<MutableGATKRead, ReadContextData>> readsWithContext = AddContextDataToRead.Add(markedReads, refAPISource, refAPIMetadata, variantsFileSource);
+
         final PCollection<RecalibrationTables> recalibrationReports = readsWithContext.apply(new BaseRecalibratorStub(headerSingleton));
         final PCollectionView<RecalibrationTables> mergedRecalibrationReport = recalibrationReports.apply(View.<RecalibrationTables>asSingleton());
 
-        final PCollection<Read> finalReads = markedReads.apply(new ApplyBQSRStub(headerSingleton, mergedRecalibrationReport));
+        final PCollection<MutableGATKRead> finalReads = markedReads.apply(new ApplyBQSRStub(headerSingleton, mergedRecalibrationReport));
+        SmallBamWriter.writeToFile(pipeline, finalReads, readsHeader, output);
     }
 
     private List<SimpleInterval> getAllIntervalsForReference(SAMSequenceDictionary sequenceDictionary) {
@@ -76,7 +92,7 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
 
     // NOTE: need a way to ensure that certain tools are guaranteed to have a header -- one option is
     // an interface with a factory method
-    private static class MarkDuplicatesStub extends PTransform<PCollection<Read>, PCollection<Read>> {
+    private static class MarkDuplicatesStub extends PTransform<PCollection<MutableGATKRead>, PCollection<MutableGATKRead>> {
 
         private PCollectionView<SAMFileHeader> header;
 
@@ -85,9 +101,9 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
         }
 
         @Override
-        public PCollection<Read> apply( PCollection<Read> input ) {
+        public PCollection<MutableGATKRead> apply( PCollection<MutableGATKRead> input ) {
             return input.apply(ParDo.named("MarkDuplicates").
-                    of(new DoFn<Read, Read>() {
+                    of(new DoFn<MutableGATKRead, MutableGATKRead>() {
                         @Override
                         public void processElement( ProcessContext c ) throws Exception {
                             c.output(c.element());
@@ -96,7 +112,7 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
         }
     }
 
-    private static class BaseRecalibratorStub extends PTransform<PCollection<KV<Read, ReadContextData>>, PCollection<RecalibrationTables>> {
+    private static class BaseRecalibratorStub extends PTransform<PCollection<KV<MutableGATKRead, ReadContextData>>, PCollection<RecalibrationTables>> {
         private PCollectionView<SAMFileHeader> header;
 
         public BaseRecalibratorStub( final PCollectionView<SAMFileHeader> header ) {
@@ -104,9 +120,9 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
         }
 
         @Override
-        public PCollection<RecalibrationTables> apply( PCollection<KV<Read, ReadContextData>> input ) {
+        public PCollection<RecalibrationTables> apply( PCollection<KV<MutableGATKRead, ReadContextData>> input ) {
             return input.apply(ParDo.named("BaseRecalibrator").
-                    of(new DoFn<KV<Read, ReadContextData>, RecalibrationTables>() {
+                    of(new DoFn<KV<MutableGATKRead, ReadContextData>, RecalibrationTables>() {
 
                         @Override
                         public void processElement( ProcessContext c ) throws Exception {
@@ -116,7 +132,7 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
         }
     }
 
-    private static class ApplyBQSRStub extends PTransform<PCollection<Read>, PCollection<Read>> {
+    private static class ApplyBQSRStub extends PTransform<PCollection<MutableGATKRead>, PCollection<MutableGATKRead>> {
         private PCollectionView<SAMFileHeader> header;
         private PCollectionView<RecalibrationTables> recalibrationReport;
 
@@ -126,9 +142,9 @@ public class ReadsPreprocessingPipeline extends DataflowCommandLineProgram {
         }
 
         @Override
-        public PCollection<Read> apply( PCollection<Read> input ) {
+        public PCollection<MutableGATKRead> apply( PCollection<MutableGATKRead> input ) {
             return input.apply(ParDo.named("ApplyBQSR").
-                    of(new DoFn<Read, Read>() {
+                    of(new DoFn<MutableGATKRead, MutableGATKRead>() {
 
                         @Override
                         public void processElement( ProcessContext c ) throws Exception {
