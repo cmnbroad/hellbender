@@ -33,14 +33,14 @@ public  class AssemblyResultSet {
     private final Map<Integer,AssemblyResult> assemblyResultByKmerSize;
     private final Set<Haplotype> haplotypes;
     private final Map<Haplotype,AssemblyResult> assemblyResultByHaplotype;
-    private ActiveRegion regionForGenotyping;
+    private AssemblyRegion regionForGenotyping;
     private byte[] fullReferenceWithPadding;
     private GenomeLoc paddedReferenceLoc;
     private boolean variationPresent;
     private Haplotype refHaplotype;
     private boolean wasTrimmed = false;
     private final CountSet kmerSizes;
-    private TreeSet<VariantContext> variationEvents;
+    private SortedSet<VariantContext> variationEvents;
     private boolean debug;
     private static Logger logger = LogManager.getLogger(AssemblyResultSet.class);
 
@@ -66,7 +66,7 @@ public  class AssemblyResultSet {
     /**
      * Trims an assembly result set down based on a new set of trimmed haplotypes.
      *
-     * @param trimmedActiveRegion the trimmed down active region.
+     * @param trimmedAssemblyRegion the trimmed down active region.
      *
      * @throws NullPointerException if any argument in {@code null} or
      *      if there are {@code null} entries in {@code originalByTrimmedHaplotypes} for trimmed haplotype keys.
@@ -74,11 +74,11 @@ public  class AssemblyResultSet {
      *
      * @return never {@code null}, a new trimmed assembly result set.
      */
-    public AssemblyResultSet trimTo(final ActiveRegion trimmedActiveRegion) {
+    public AssemblyResultSet trimTo(final AssemblyRegion trimmedAssemblyRegion) {
 
-        final Map<Haplotype,Haplotype> originalByTrimmedHaplotypes = calculateOriginalByTrimmedHaplotypes(trimmedActiveRegion);
+        final Map<Haplotype,Haplotype> originalByTrimmedHaplotypes = calculateOriginalByTrimmedHaplotypes(trimmedAssemblyRegion);
         if (refHaplotype == null) throw new IllegalStateException();
-        if (trimmedActiveRegion == null) throw new NullPointerException();
+        if (trimmedAssemblyRegion == null) throw new NullPointerException();
         final AssemblyResultSet result = new AssemblyResultSet();
 
         for (final Haplotype trimmed : originalByTrimmedHaplotypes.keySet()) {
@@ -89,7 +89,7 @@ public  class AssemblyResultSet {
             if (as == null) result.add(trimmed); else result.add(trimmed, as);
         }
 
-        result.setRegionForGenotyping(trimmedActiveRegion);
+        result.setRegionForGenotyping(trimmedAssemblyRegion);
         result.setFullReferenceWithPadding(this.fullReferenceWithPadding);
         result.setPaddedReferenceLoc(this.paddedReferenceLoc);
         if (result.refHaplotype == null)
@@ -98,7 +98,7 @@ public  class AssemblyResultSet {
         return result;
     }
 
-    private Map<Haplotype, Haplotype> calculateOriginalByTrimmedHaplotypes(final ActiveRegion trimmedActiveRegion) {
+    private Map<Haplotype, Haplotype> calculateOriginalByTrimmedHaplotypes(final AssemblyRegion trimmedAssemblyRegion) {
         if ( debug ) logger.info("Trimming active region " + getRegionForGenotyping() + " with " + getHaplotypeCount() + " haplotypes");
 
         final List<Haplotype> haplotypeList = getHaplotypeList();
@@ -107,7 +107,7 @@ public  class AssemblyResultSet {
         final Map<Haplotype,Haplotype> originalByTrimmedHaplotypes = new HashMap<>();
 
         for ( final Haplotype h : haplotypeList ) {
-            final Haplotype trimmed = h.trim(trimmedActiveRegion.getExtendedLoc());
+            final Haplotype trimmed = h.trim(trimmedAssemblyRegion.getExtendedSpan());
 
             if ( trimmed != null ) {
                 if (originalByTrimmedHaplotypes.containsKey(trimmed)) {
@@ -122,7 +122,7 @@ public  class AssemblyResultSet {
             else if ( debug ) {
                 logger.info("Throwing out haplotype " + h + " with cigar " + h.getCigar() +
                         " because it starts with or ends with an insertion or deletion when trimmed to " +
-                        trimmedActiveRegion.getExtendedLoc());
+                        trimmedAssemblyRegion.getExtendedSpan());
             }
         }
 
@@ -136,8 +136,8 @@ public  class AssemblyResultSet {
             sortedOriginalByTrimmedHaplotypes.put(trimmed,originalByTrimmedHaplotypes.get(trimmed));
 
 
-        if ( debug ) logger.info("Trimmed region to " + trimmedActiveRegion.getLocation() + " size " +
-                trimmedActiveRegion.getLocation().size() + " reduced number of haplotypes from " +
+        if ( debug ) logger.info("Trimmed region to " + trimmedAssemblyRegion.getSpan() + " size " +
+                trimmedAssemblyRegion.getSpan().size() + " reduced number of haplotypes from " +
                 haplotypeList.size() + " to only " + trimmedHaplotypes.size());
         if ( debug )
             for ( final Haplotype remaining: trimmedHaplotypes )
@@ -177,8 +177,8 @@ public  class AssemblyResultSet {
         if (getHaplotypeList().size() == 0) {
             return;
         }
-        pw.println("Active Region " + this.regionForGenotyping.getLocation());
-        pw.println("Extended Act Region " + this.getRegionForGenotyping().getExtendedLoc());
+        pw.println("Active Region " + this.regionForGenotyping.getSpan());
+        pw.println("Extended Act Region " + this.getRegionForGenotyping().getExtendedSpan());
         pw.println("Ref haplotype coords " + getHaplotypeList().get(0).getGenomeLocation());
         pw.println("Haplotype count " + haplotypes.size());
         final Map<Integer,Integer> kmerSizeToCount = new HashMap<>();
@@ -300,7 +300,7 @@ public  class AssemblyResultSet {
      *
      * @return might be {@code null}.
      */
-    public ActiveRegion getRegionForGenotyping() {
+    public AssemblyRegion getRegionForGenotyping() {
         return regionForGenotyping;
     }
 
@@ -309,7 +309,7 @@ public  class AssemblyResultSet {
      *
      * @param regionForGenotyping the new value.
      */
-    public void setRegionForGenotyping(final ActiveRegion regionForGenotyping) {
+    public void setRegionForGenotyping(final AssemblyRegion regionForGenotyping) {
         this.regionForGenotyping = regionForGenotyping;
     }
 
@@ -486,7 +486,7 @@ public  class AssemblyResultSet {
      *
      * @return never {@code null}, but perhaps an empty collection.
      */
-    public TreeSet<VariantContext> getVariationEvents() {
+    public SortedSet<VariantContext> getVariationEvents() {
         if (variationEvents == null) {
             final List<Haplotype> haplotypeList = getHaplotypeList();
             EventMap.buildEventMapsForHaplotypes(haplotypeList, fullReferenceWithPadding, paddedReferenceLoc, debug);

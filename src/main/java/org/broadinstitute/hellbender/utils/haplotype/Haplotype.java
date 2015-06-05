@@ -216,5 +216,11 @@ public final class Haplotype extends Allele implements HasGenomeLocation {
         this.score = score;
     }
 
-
+    /**
+     * Get the span of this haplotype (may be null)
+     * @return a potentially null genome loc
+     */
+    public GenomeLoc getGenomeLocation() {
+        return genomeLocation;
+    }
 }

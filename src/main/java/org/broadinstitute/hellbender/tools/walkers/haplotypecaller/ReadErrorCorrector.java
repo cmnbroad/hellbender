@@ -5,9 +5,11 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
+import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 import java.util.*;
 
@@ -209,15 +211,19 @@ public class ReadErrorCorrector {
                 return inputRead;
             }
             else {
-                SAMRecord correctedRead = new SAMRecord(inputRead);
+                SAMRecord correctedRead = null;
+                try {
+                    correctedRead = (SAMRecord)inputRead.clone();
+                } catch (CloneNotSupportedException e) {
+                    throw new IllegalStateException(e);//this should never happen. HTSJDK's signature is bogus: https://github.com/samtools/htsjdk/issues/192
+                }
 
                 //  do the actual correction
                 // todo - do we need to clone anything else from read?
                 correctedRead.setBaseQualities(inputRead.getBaseQualities());
-                correctedRead.setIsStrandless(inputRead.isStrandless());
                 correctedRead.setReadBases(inputRead.getReadBases());
                 correctedRead.setReadString(inputRead.getReadString());
-                correctedRead.setReadGroup(inputRead.getReadGroup());
+                ReadUtils.setReadGroup(correctedRead, inputRead.getReadGroup());
                 return correctedRead;
             }
         }

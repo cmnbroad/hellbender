@@ -11,10 +11,12 @@ import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.*;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
+import org.broadinstitute.hellbender.utils.gga.*;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
+
 
 /**
  * Abstract base class for all HaplotypeCaller assemblers
@@ -64,7 +66,7 @@ public abstract class LocalAssemblyEngine {
 
     /**
      * Main entry point into the assembly engine. Build a set of deBruijn graphs out of the provided reference sequence and list of reads
-     * @param activeRegion              ActiveRegion object holding the reads which are to be used during assembly
+     * @param assemblyRegion              AssemblyRegion object holding the reads which are to be used during assembly
      * @param refHaplotype              reference haplotype object
      * @param fullReferenceWithPadding  byte array holding the reference sequence with padding
      * @param refLoc                    GenomeLoc object corresponding to the reference sequence with padding
@@ -72,20 +74,20 @@ public abstract class LocalAssemblyEngine {
      * @param readErrorCorrector        a ReadErrorCorrector object, if read are to be corrected before assembly. Can be null if no error corrector is to be used.
      * @return                          the resulting assembly-result-set
      */
-    public AssemblyResultSet runLocalAssembly(final ActiveRegion activeRegion,
+    public AssemblyResultSet runLocalAssembly(final AssemblyRegion assemblyRegion,
                                             final Haplotype refHaplotype,
                                             final byte[] fullReferenceWithPadding,
                                             final GenomeLoc refLoc,
                                             final List<VariantContext> givenAlleles,
                                             final ReadErrorCorrector readErrorCorrector) {
-        if( activeRegion == null ) { throw new IllegalArgumentException("Assembly engine cannot be used with a null ActiveRegion."); }
-        if( activeRegion.getExtendedLoc() == null ) { throw new IllegalArgumentException("Active region must have an extended location."); }
+        if( assemblyRegion == null ) { throw new IllegalArgumentException("Assembly engine cannot be used with a null AssemblyRegion."); }
+        if( assemblyRegion.getExtendedSpan() == null ) { throw new IllegalArgumentException("Active region must have an extended location."); }
         if( refHaplotype == null ) { throw new IllegalArgumentException("Reference haplotype cannot be null."); }
         if( fullReferenceWithPadding.length != refLoc.size() ) { throw new IllegalArgumentException("Reference bases and reference loc must be the same size."); }
         if( pruneFactor < 0 ) { throw new IllegalArgumentException("Pruning factor cannot be negative"); }
 
         // create the list of artificial haplotypes that should be added to the graph for GGA mode
-        final List<Haplotype> givenHaplotypes = GenotypingGivenAllelesUtils.composeGivenHaplotypes(refHaplotype, givenAlleles, activeRegion.getExtendedLoc());
+        final List<Haplotype> givenHaplotypes = GenotypingGivenAllelesUtils.composeGivenHaplotypes(refHaplotype, givenAlleles, assemblyRegion.getExtendedSpan());
 
         // error-correct reads before clipping low-quality tails: some low quality bases might be good and we want to recover them
         final List<SAMRecord> correctedReads;
@@ -93,18 +95,18 @@ public abstract class LocalAssemblyEngine {
             // now correct all reads in active region after filtering/downsampling
             // Note that original reads in active region are NOT modified by default, since they will be used later for GL computation,
             // and we only want the read-error corrected reads for graph building.
-            readErrorCorrector.addReadsToKmers(activeRegion.getReads());
-            correctedReads = new ArrayList<>(readErrorCorrector.correctReads(activeRegion.getReads()));
+            readErrorCorrector.addReadsToKmers(assemblyRegion.getReads());
+            correctedReads = new ArrayList<>(readErrorCorrector.correctReads(assemblyRegion.getReads()));
         } else {
-            correctedReads = activeRegion.getReads();
+            correctedReads = assemblyRegion.getReads();
         }
 
         final List<SeqGraph> nonRefGraphs = new LinkedList<>();
         final AssemblyResultSet resultSet = new AssemblyResultSet();
-        resultSet.setRegionForGenotyping(activeRegion);
+        resultSet.setRegionForGenotyping(assemblyRegion);
         resultSet.setFullReferenceWithPadding(fullReferenceWithPadding);
         resultSet.setPaddedReferenceLoc(refLoc);
-        final GenomeLoc activeRegionExtendedLocation = activeRegion.getExtendedLoc();
+        final GenomeLoc activeRegionExtendedLocation = assemblyRegion.getExtendedSpan();
         refHaplotype.setGenomeLocation(activeRegionExtendedLocation);
         resultSet.add(refHaplotype);
         final Map<SeqGraph,AssemblyResult> assemblyResultByGraph = new HashMap<>();

@@ -37,6 +37,7 @@ public class ReadCost {
         cost = initialCost;
     }
 
+
     /**
      * Comparator used to sort ReadCosts
      */
