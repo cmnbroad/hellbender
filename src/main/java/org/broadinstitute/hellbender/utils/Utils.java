@@ -503,4 +503,20 @@ public final class Utils {
 
         return c;
     }
+
+    /**
+     * Create a new string thats a n duplicate copies of s
+     *
+     * use Strings.repeat
+     */
+    @Deprecated
+    public static String dupString(final String s, int nCopies) {
+        return Strings.repeat(s, nCopies);
+    }
+
+    public static String dupString(char c, int nCopies) {
+        char[] chars = new char[nCopies];
+        Arrays.fill(chars, c);
+        return new String(chars);
+    }
 }

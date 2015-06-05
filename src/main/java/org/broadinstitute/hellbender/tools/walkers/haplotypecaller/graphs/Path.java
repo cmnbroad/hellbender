@@ -275,6 +275,17 @@ public class Path<T extends BaseVertex, E extends BaseEdge> {
         return bases;
     }
 
+
+    /**
+     * Calculate the cigar elements for this path against the reference sequence
+     *
+     * @param refSeq the reference sequence that all of the bases in this path should align to
+     * @return a Cigar mapping this path to refSeq, or null if no reasonable alignment could be found
+     */
+    public  Cigar calculateCigar(final byte[] refSeq) {
+        return CigarUtils.calculateCigar(refSeq,getBases());
+    }
+
     /**
      * Tests that this and other have the same score and vertices in the same order with the same seq
      * @param other the other path to consider.  Cannot be null
