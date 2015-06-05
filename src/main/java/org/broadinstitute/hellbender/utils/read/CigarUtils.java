@@ -5,14 +5,20 @@ import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.SAMRecord;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.utils.smithwaterman.Parameters;
+import org.broadinstitute.hellbender.utils.smithwaterman.SWPairwiseAlignment;
+import org.broadinstitute.hellbender.utils.smithwaterman.SmithWaterman;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 public final class CigarUtils {
+
+    // used in the bubble state machine to apply Smith-Waterman to the bubble sequence
+    // these values were chosen via optimization against the NA12878 knowledge base
+    public static final Parameters NEW_SW_PARAMETERS = new Parameters(200, -150, -260, -11);
+
+    private final static String SW_PAD = "NNNNNNNNNN";
+
     private CigarUtils(){}
 
     /**
@@ -290,5 +296,100 @@ public final class CigarUtils {
         }
         //once all clips are consumed, is it a deletion or not?
         return op == CigarOperator.DELETION;
+    }
+
+    /**
+     * Calculate the cigar elements for this path against the reference sequence
+     *
+     * @param refSeq the reference sequence that all of the bases in this path should align to
+     * @return a Cigar mapping this path to refSeq, or null if no reasonable alignment could be found
+     */
+    public static Cigar calculateCigar(final byte[] refSeq, final byte[] altSeq) {
+        if ( altSeq.length == 0 ) {
+            // horrible edge case from the unit tests, where this path has no bases
+            return new Cigar(Arrays.asList(new CigarElement(refSeq.length, CigarOperator.D)));
+        }
+
+        final Cigar nonStandard;
+
+        final String paddedRef = SW_PAD + new String(refSeq) + SW_PAD;
+        final String paddedPath = SW_PAD + new String(altSeq) + SW_PAD;
+        final SmithWaterman alignment = new SWPairwiseAlignment( paddedRef.getBytes(), paddedPath.getBytes(), NEW_SW_PARAMETERS);
+
+        if ( isSWFailure(alignment) ) {
+            return null;
+        }
+
+
+        // cut off the padding bases
+        final int baseStart = SW_PAD.length();
+        final int baseEnd = paddedPath.length() - SW_PAD.length() - 1; // -1 because it's inclusive
+        nonStandard = AlignmentUtils.trimCigarByBases(alignment.getCigar(), baseStart, baseEnd);
+
+        if ( nonStandard.getReferenceLength() != refSeq.length ) {
+            nonStandard.add(new CigarElement(refSeq.length - nonStandard.getReferenceLength(), CigarOperator.D));
+        }
+
+        // finally, return the cigar with all indels left aligned
+        return leftAlignCigarSequentially(nonStandard, refSeq, altSeq, 0, 0);
+    }
+
+    /**
+     * Make sure that the SW didn't fail in some terrible way, and throw exception if it did
+     */
+    private static boolean isSWFailure(final SmithWaterman alignment) {
+        // check that the alignment starts at the first base, which it should given the padding
+        if ( alignment.getAlignmentStart2wrt1() > 0 ) {
+            return true;
+//          throw new IllegalStateException("SW failure ref " + paddedRef + " vs. " + paddedPath + " should always start at 0, but got " + alignment.getAlignmentStart2wrt1() + " with cigar " + alignment.getCigar());
+        }
+
+        // check that we aren't getting any S operators (which would be very bad downstream)
+        for ( final CigarElement ce : alignment.getCigar().getCigarElements() ) {
+            if ( ce.getOperator() == CigarOperator.S )
+                return true;
+            // soft clips at the end of the alignment are really insertions
+//                throw new IllegalStateException("SW failure ref " + paddedRef + " vs. " + paddedPath + " should never contain S operators but got cigar " + alignment.getCigar());
+        }
+
+        return false;
+    }
+
+    /**
+     * Left align the given cigar sequentially. This is needed because AlignmentUtils doesn't accept cigars with more than one indel in them.
+     * This is a target of future work to incorporate and generalize into AlignmentUtils for use by others.
+     * @param cigar     the cigar to left align
+     * @param refSeq    the reference byte array
+     * @param readSeq   the read byte array
+     * @param refIndex  0-based alignment start position on ref
+     * @param readIndex 0-based alignment start position on read
+     * @return          the left-aligned cigar
+     */
+    public static Cigar leftAlignCigarSequentially(final Cigar cigar, final byte[] refSeq, final byte[] readSeq, int refIndex, int readIndex) {
+        final Cigar cigarToReturn = new Cigar();
+        Cigar cigarToAlign = new Cigar();
+        for (int i = 0; i < cigar.numCigarElements(); i++) {
+            final CigarElement ce = cigar.getCigarElement(i);
+            if (ce.getOperator() == CigarOperator.D || ce.getOperator() == CigarOperator.I) {
+                cigarToAlign.add(ce);
+                final Cigar leftAligned = AlignmentUtils.leftAlignSingleIndel(cigarToAlign, refSeq, readSeq, refIndex, readIndex, false);
+                for ( final CigarElement toAdd : leftAligned.getCigarElements() ) { cigarToReturn.add(toAdd); }
+                refIndex += cigarToAlign.getReferenceLength();
+                readIndex += cigarToAlign.getReadLength();
+                cigarToAlign = new Cigar();
+            } else {
+                cigarToAlign.add(ce);
+            }
+        }
+        if( !cigarToAlign.isEmpty() ) {
+            for( final CigarElement toAdd : cigarToAlign.getCigarElements() ) {
+                cigarToReturn.add(toAdd);
+            }
+        }
+
+        final Cigar result = AlignmentUtils.consolidateCigar(cigarToReturn);
+        if( result.getReferenceLength() != cigar.getReferenceLength() )
+            throw new IllegalStateException("leftAlignCigarSequentially failed to produce a valid CIGAR.  Reference lengths differ.  Initial cigar " + cigar + " left aligned into " + result);
+        return result;
     }
 }

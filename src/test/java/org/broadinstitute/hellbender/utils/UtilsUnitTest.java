@@ -328,4 +328,38 @@ public final class UtilsUnitTest extends BaseTest {
                 {0, 0}, {10, 10}, {11, 5}, {-1, 10}, {0, -10}
         };
     }
+
+    @Test(dataProvider = "equalRangeData", enabled = true)
+    public void testEqualRange(final byte[] array1, final byte[] array2, final int offset1, final int offset2, final int length, final boolean expected) {
+        Assert.assertEquals(Utils.equalRange(array1,offset1,array2,offset2,length),expected);
+        Assert.assertTrue(Utils.equalRange(array1,offset1,array1,offset1,length));
+        Assert.assertTrue(Utils.equalRange(array2,offset2,array2,offset2,length));
+
+    }
+
+    @DataProvider(name = "equalRangeData")
+    public Object[][] equalRangeData() {
+        return new Object[][] {
+                new Object[] { new byte[0] , new byte[0], 0, 0, 0, true},
+                new Object[]  {      "ABCF".getBytes(), "BC".getBytes(), 1,0,2, true },
+                new Object[]  { "ABCF".getBytes(), "".getBytes(), 1,0,0, true },
+                new Object[]  { "ABCF".getBytes(), "ACBF".getBytes(), 0,0, 4, false}
+        };
+
+    }
+
+    @Test
+    public void testConcat() {
+        final String s1 = "A";
+        final String s2 = "CC";
+        final String s3 = "TTT";
+        final String s4 = "GGGG";
+        Assert.assertEquals(new String(Utils.concat()), "");
+        Assert.assertEquals(new String(Utils.concat(s1.getBytes())), s1);
+        Assert.assertEquals(new String(Utils.concat(s1.getBytes(), s2.getBytes())), s1 + s2);
+        Assert.assertEquals(new String(Utils.concat(s1.getBytes(), s2.getBytes(), s3.getBytes())), s1 + s2 + s3);
+        Assert.assertEquals(new String(Utils.concat(s1.getBytes(), s2.getBytes(), s3.getBytes(), s4.getBytes())), s1 + s2 + s3 + s4);
+    }
+
+
 }
