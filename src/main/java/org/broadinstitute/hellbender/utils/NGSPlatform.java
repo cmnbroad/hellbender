@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * A canonical, master list of the standard NGS platforms.  These values
- * can be obtained (efficiently) from a GATKSAMRecord object with the
+ * can be obtained (efficiently) from a SAMRecord object with the
  * getNGSPlatform method.
  */
 public enum NGSPlatform {
@@ -58,11 +58,11 @@ public enum NGSPlatform {
     }
 
     /**
-     * Convenience get -- get the NGSPlatform from a GATKSAMRecord.
+     * Convenience get -- get the NGSPlatform from a SAMRecord.
      *
      * Just gets the platform from the GATKReadGroupRecord associated with this read.
      *
-     * @param read a non-null GATKSAMRecord
+     * @param read a non-null SAMRecord
      * @return an NGSPlatform object matching the PL field of the header, of UNKNOWN if there was no match,
      *         if there is no read group for read, or there's no PL field for the read group
      */

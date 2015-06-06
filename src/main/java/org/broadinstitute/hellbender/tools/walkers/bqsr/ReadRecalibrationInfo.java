@@ -83,7 +83,7 @@ public final class ReadRecalibrationInfo {
 
     /**
      * Get the read involved in this recalibration info
-     * @return a non-null GATKSAMRecord
+     * @return a non-null SAMRecord
      */
     public SAMRecord getRead() {
         return read;

@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 import htsjdk.samtools.SAMRecord;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -26,4 +27,12 @@ public interface AssemblyRegion {
      * The reads are sorted by their coordinate position
     */
      List<SAMRecord> getReads();
+
+    AssemblyRegion trim(GenomeLoc newLocation);
+
+    /**
+     * Add all reads to this active region
+     * @param reads a collection of reads to add to this active region
+     */
+    void addAll(Collection<SAMRecord> reads);
 }

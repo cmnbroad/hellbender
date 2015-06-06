@@ -112,7 +112,7 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
     }
 
     public final boolean contiguousP(GenomeLoc that) {
-        return ! discontinuousP( that );
+        return ! discontinuousP(that);
     }
 
     /**
@@ -489,5 +489,33 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
             distance += samFileHeader.getSequence(i).getSequenceLength();
         }
         return distance;
+    }
+
+    /**
+     * create a new genome loc from an existing loc, with a new start position
+     * Note that this function will NOT explicitly check the ending offset, in case someone wants to
+     * set the start of a new GenomeLoc pertaining to a read that goes off the end of the contig.
+     *
+     * @param loc   the old location
+     * @param start a new start position
+     *
+     * @return a newly allocated GenomeLoc as loc but with start == start
+     */
+    public GenomeLoc setStart(GenomeLoc loc, int start) {
+        return new GenomeLoc(loc.getContig(), loc.getContigIndex(), start, loc.getStop());
+    }
+
+    /**
+     * create a new genome loc from an existing loc, with a new stop position
+     * Note that this function will NOT explicitly check the ending offset, in case someone wants to
+     * set the stop of a new GenomeLoc pertaining to a read that goes off the end of the contig.
+     *
+     * @param loc  the old location
+     * @param stop a new stop position
+     *
+     * @return a newly allocated GenomeLoc as loc but with stop == stop
+     */
+    public GenomeLoc setStop(GenomeLoc loc, int stop) {
+        return new GenomeLoc(loc.getContig(), loc.getContigIndex(), loc.start, stop);
     }
 }

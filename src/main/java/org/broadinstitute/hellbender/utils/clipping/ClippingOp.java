@@ -52,7 +52,7 @@ public final class ClippingOp {
         switch (algorithm) {
             // important note:
             //   it's not safe to call read.getReadBases()[i] = 'N' or read.getBaseQualities()[i] = 0
-            //   because you're not guaranteed to get a pointer to the actual array of bytes in the GATKSAMRecord
+            //   because you're not guaranteed to get a pointer to the actual array of bytes in the SAMRecord
             case WRITE_NS:
                 for (int i = 0; i < bases.length; i++) {
                     if (i >= start && i <= stop) {

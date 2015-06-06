@@ -66,7 +66,7 @@ public final class AlignmentStateMachine {
 
     /**
      * Get the read we are aligning to the genome
-     * @return a non-null GATKSAMRecord
+     * @return a non-null SAMRecord
      */
     public SAMRecord getRead() {
         return read;

@@ -94,7 +94,7 @@ public final class PileupElement implements Comparable<PileupElement> {
 
     /**
      * Get the read for this pileup element
-     * @return a non-null GATKSAMRecord
+     * @return a non-null SAMRecord
      */
     public SAMRecord getRead() {
         return read;

@@ -461,14 +461,14 @@ public final class ReadUtils {
     }
 
     /**
-     * Creates an empty GATKSAMRecord with the read's header, read group and mate
+     * Creates an empty SAMRecord with the read's header, read group and mate
      * information, but empty (not-null) fields:
      *  - Cigar String
      *  - Read Bases
      *  - Base Qualities
      *
-     * Use this method if you want to create a new empty GATKSAMRecord based on
-     * another GATKSAMRecord
+     * Use this method if you want to create a new empty SAMRecord based on
+     * another SAMRecord
      *
      * @param read a read to copy the header from
      * @return a read with no bases but safe for the GATK

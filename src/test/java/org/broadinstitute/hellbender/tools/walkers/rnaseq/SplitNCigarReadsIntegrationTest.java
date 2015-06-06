@@ -65,7 +65,7 @@ public final class SplitNCigarReadsIntegrationTest extends CommandLineProgramTes
 
         // For Debugging use those lines (instead of above cigarList) to create specific read:
         //------------------------------------------------------------------------------------
-        // final GATKSAMRecord tmpRead = GATKSAMRecord.createRandomRead(6);
+        // final SAMRecord tmpRead = SAMRecord.createRandomRead(6);
         // tmpRead.setCigarString("1M1N1M");
 
         // final List<Cigar> cigarList = new ArrayList<>();
