@@ -7,9 +7,9 @@ import org.broadinstitute.hellbender.utils.GenomeLoc;
  */
 public final class ActivityProfileState {
     final private GenomeLoc loc;
-    public double isActiveProb;
-    public Type resultState;
-    public Number resultValue;
+    public final double isActiveProb;
+    public final Type resultState;
+    public final Number resultValue;
 
     public enum Type {
         NONE,
