@@ -29,7 +29,7 @@ public class LocalAssemblyEngineUnitTest extends BaseTest {
 
     @BeforeClass
     public void setup() throws FileNotFoundException {
-        seq = new CachingIndexedFastaSequenceFile(new File(b37KGReference));
+        seq = new CachingIndexedFastaSequenceFile(new File(hg19_chr1_1M_Reference));
         genomeLocParser = new GenomeLocParser(seq);
         header = ArtificialSAMUtils.createArtificialSamHeader(seq.getSequenceDictionary());
     }

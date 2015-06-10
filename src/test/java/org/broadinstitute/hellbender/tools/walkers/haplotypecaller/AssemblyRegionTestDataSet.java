@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.utils.GenomeLocParser;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.read.ArtificialSAMUtils;
+import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -276,8 +277,8 @@ public class AssemblyRegionTestDataSet {
 
             final byte[] readBases = r.getReadBases();
             final byte[] bq = r.getBaseQualities();
-            final byte[] iq = r.getBaseInsertionQualities();
-            final byte[] dq = r.getBaseDeletionQualities();
+            final byte[] iq = ReadUtils.getBaseInsertionQualities(r);
+            final byte[] dq = ReadUtils.getBaseDeletionQualities(r);
             int refOffset = r.getAlignmentStart() - 1;
             int readOffset = 0;
             for (int i = 0; i < r.getReadBases().length;) {
