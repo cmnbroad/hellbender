@@ -70,5 +70,4 @@ public final class ActivityProfileStateUnitTest {
         final String chr = genomeLocParser.getSequenceDictionary().getSequence(0).getSequenceName();
         new ActivityProfileState(genomeLocParser.createGenomeLoc(chr, 10, 11), 0.1, null, 1.0);
     }
-
 }

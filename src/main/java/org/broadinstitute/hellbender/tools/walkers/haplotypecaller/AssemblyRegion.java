@@ -2,18 +2,16 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordCoordinateComparator;
+import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.GenomeLocParser;
+import org.broadinstitute.hellbender.utils.GenomeLocSortedSet;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
-import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * Interface that describes the region of the genome that gets assembled by the local assembly engine.
+ * Region of the genome that gets assembled by the local assembly engine.
  */
 public final class AssemblyRegion {
 
@@ -21,7 +19,7 @@ public final class AssemblyRegion {
      * The reads included in this active region.  May be empty upon creation, and expand / contract
      * as reads are added or removed from this region.
      */
-    private final List<SAMRecord> reads = new ArrayList<>();
+    private final List<SAMRecord> reads;
 
     /**
      * An ordered list (by genomic coordinate) of the ActivityProfileStates that went
@@ -66,9 +64,8 @@ public final class AssemblyRegion {
      */
     private GenomeLoc spanIncludingReads;
 
-
     /**
-     * Indicates whether the active region has been finalized
+     * Indicates whether the region has been finalized
      */
     private boolean hasBeenFinalized;
 
@@ -88,6 +85,7 @@ public final class AssemblyRegion {
         if ( genomeLocParser == null ) throw new IllegalArgumentException("genomeLocParser cannot be null");
         if ( extension < 0 ) throw new IllegalArgumentException("extension cannot be < 0 but got " + extension);
 
+        this.reads = new ArrayList<>();
         this.activeRegionLoc = activeRegionLoc;
         this.supportingStates = supportingStates == null ? Collections.<ActivityProfileState>emptyList() : new ArrayList<>(supportingStates);
         this.isActive = isActive;
@@ -149,6 +147,28 @@ public final class AssemblyRegion {
     */
     public List<SAMRecord> getReads(){
         return Collections.unmodifiableList(reads);
+    }
+
+    /**
+     * Intersect this active region with the allowed intervals, returning a list of active regions
+     * that only contain locations present in intervals
+     *
+     * Note that the returned list may be empty, if this active region doesn't overlap the set at all
+     *
+     * Note that the resulting regions are all empty, regardless of whether the current active region has reads
+     *
+     * @param intervals a non-null set of intervals that are allowed
+     * @return an ordered list of active region where each interval is contained within intervals
+     */
+    List<AssemblyRegion> splitAndTrimToIntervals(final GenomeLocSortedSet intervals) {
+        final List<GenomeLoc> allOverlapping = intervals.getOverlapping(getLocation());
+        final List<AssemblyRegion> clippedRegions = new LinkedList<>();
+
+        for ( final GenomeLoc overlapping : allOverlapping ) {
+            clippedRegions.add(trim(overlapping, extension));
+        }
+
+        return clippedRegions;
     }
 
     /**
@@ -289,6 +309,23 @@ public final class AssemblyRegion {
     }
 
     /**
+     * Remove all of the reads in readsToRemove from this active region
+     * @param readsToRemove the set of reads we want to remove
+     */
+    public void removeAll( final Set<SAMRecord> readsToRemove ) {
+        final Iterator<SAMRecord> it = reads.iterator();
+        spanIncludingReads = extendedLoc;
+        while ( it.hasNext() ) {
+            final SAMRecord read = it.next();
+            if ( readsToRemove.contains(read) ) {
+                it.remove();
+            } else {
+                spanIncludingReads = spanIncludingReads.union(genomeLocParser.createGenomeLoc(read));
+            }
+        }
+    }
+
+    /**
      * Add all reads to this active region
      * @param reads a collection of reads to add to this active region
      */
@@ -307,4 +344,107 @@ public final class AssemblyRegion {
      * @return the size in bp of the region extension
      */
     public int getExtension() { return extension; }
+
+    /**
+     * Use getSpan();
+     */
+    @Deprecated
+    public GenomeLoc getLocation() {
+        return getSpan();
+    }
+
+    /**
+     * Use getExtendedSpan();
+     */
+    @Deprecated
+    public GenomeLoc getExtendedLoc() {
+        return getExtendedSpan();
+    }
+
+    public GenomeLoc getReadSpanLoc() {
+        return spanIncludingReads;
+    }
+
+    public List<ActivityProfileState> getSupportingStates() {
+        return supportingStates;
+    }
+
+    /**
+     * See #getActiveRegionReference but using the span including regions not the extended span
+     */
+    public byte[] getFullReference( final IndexedFastaSequenceFile referenceReader ) {
+        return getFullReference(referenceReader, 0);
+    }
+
+    /**
+     * See #getActiveRegionReference but using the span including regions not the extended span
+     */
+    public byte[] getFullReference( final IndexedFastaSequenceFile referenceReader, final int padding ) {
+        return getReference(referenceReader, padding, spanIncludingReads);
+    }
+
+    /**
+     * Get the reference bases from referenceReader spanned by the extended location of this region,
+     * including additional padding bp on either side.  If this expanded region would exceed the boundaries
+     * of the active region's contig, the returned result will be truncated to only include on-genome reference
+     * bases
+     * @param referenceReader the source of the reference genome bases
+     * @param padding the padding, in BP, we want to add to either side of this active region extended region
+     * @param genomeLoc a non-null genome loc indicating the base span of the bp we'd like to get the reference for
+     * @return a non-null array of bytes holding the reference bases in referenceReader
+     */
+    public byte[] getReference( final IndexedFastaSequenceFile referenceReader, final int padding, final GenomeLoc genomeLoc ) {
+        if ( referenceReader == null ) throw new IllegalArgumentException("referenceReader cannot be null");
+        if ( padding < 0 ) throw new IllegalArgumentException("padding must be a positive integer but got " + padding);
+        if ( genomeLoc == null ) throw new IllegalArgumentException("genomeLoc cannot be null");
+        if ( genomeLoc.size() == 0 ) throw new IllegalArgumentException("GenomeLoc must have size > 0 but got " + genomeLoc);
+
+        final byte[] reference =  referenceReader.getSubsequenceAt( genomeLoc.getContig(),
+                Math.max(1, genomeLoc.getStart() - padding),
+                Math.min(referenceReader.getSequenceDictionary().getSequence(genomeLoc.getContig()).getSequenceLength(), genomeLoc.getStop() + padding) ).getBases();
+
+        return reference;
+    }
+
+    /**
+     * See #getAssemblyRegionReference but with padding == 0
+     */
+    public byte[] getAssemblyRegionReference( final IndexedFastaSequenceFile referenceReader ) {
+        return getAssemblyRegionReference(referenceReader, 0);
+    }
+
+    /**
+     * Get the reference bases from referenceReader spanned by the extended location of this active region,
+     * including additional padding bp on either side.  If this expanded region would exceed the boundaries
+     * of the active region's contig, the returned result will be truncated to only include on-genome reference
+     * bases
+     * @param referenceReader the source of the reference genome bases
+     * @param padding the padding, in BP, we want to add to either side of this active region extended region
+     * @return a non-null array of bytes holding the reference bases in referenceReader
+     */
+    public byte[] getAssemblyRegionReference( final IndexedFastaSequenceFile referenceReader, final int padding ) {
+        return getReference(referenceReader, padding, extendedLoc);
+    }
+
+    /**
+     * Is this region equal to other, excluding any reads in either region in the comparison
+     * @param other the other active region we want to test
+     * @return true if this region is equal, excluding any reads and derived values, to other
+     */
+    boolean equalExceptReads(final AssemblyRegion other) {
+        if ( activeRegionLoc.compareTo(other.activeRegionLoc) != 0 ) return false;
+        if ( isActive() != other.isActive()) return false;
+        if ( genomeLocParser != other.genomeLocParser ) return false;
+        if ( extension != other.extension ) return false;
+        if ( extendedLoc.compareTo(other.extendedLoc) != 0 ) return false;
+        return true;
+    }
+
+    public void setFinalized(final boolean value) {
+        hasBeenFinalized = value;
+    }
+
+    public boolean isFinalized() {
+        return hasBeenFinalized;
+    }
 }
