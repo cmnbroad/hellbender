@@ -186,7 +186,7 @@ public class AssemblyRegionTestDataSet {
                     final String base = allele == 0 ? reference : haplotypes.get(allele - 1);
                     sequence = applyCigar(base, cigar, offset, false);
                     final SAMRecord samRecord = ArtificialSAMUtils.createArtificialRead(header, "read_" + count, 0, 1, sequence.getBytes(), Arrays.copyOf(bq, sequence.length()));
-                    readList.add(new MySAMRecord(samRecord));
+                    readList.add(samRecord);
                 } else if (descr.matches("^\\*:\\d+:\\d+$")) {
                     int readCount = Integer.valueOf(descr.split(":")[1]);
                     int readLength = Integer.valueOf(descr.split(":")[2]);
@@ -194,7 +194,7 @@ public class AssemblyRegionTestDataSet {
                 } else {
                     sequence = descr;
                     final SAMRecord samRecord = ArtificialSAMUtils.createArtificialRead(header, "read_" + count, 0, 1, sequence.getBytes(), Arrays.copyOf(bq, sequence.length()));
-                    readList.add(new MySAMRecord(samRecord));
+                    readList.add(samRecord);
                 }
                 count = readList.size();
             }
@@ -227,150 +227,6 @@ public class AssemblyRegionTestDataSet {
         }
         return readEventOffsetList;
     }
-
-    public String cigarToSequence(final String cigar) {
-            String reference = this.reference;
-            return applyCigar(reference, cigar,0,true);
-    }
-
-    public SAMRecord readFromString(final String readSequence) {
-        if (readBySequence == null) {
-            final List<SAMRecord> readList = readList();
-            readBySequence = new HashMap<>(readList.size());
-            for (final SAMRecord r : readList)
-                readBySequence.put(r.getReadString(),r);
-        }
-        return readBySequence.get(readSequence);
-    }
-
-    public List<Civar> unrolledCivars() {
-        if (haplotypeCigars.length != 1 || !haplotypeCigars[0].startsWith("Civar:"))
-            throw new UnsupportedOperationException();
-        final Civar civar = Civar.fromCharSequence(haplotypeCigars[0].substring(6));
-        return civar.optionalizeAll().unroll();
-    }
-
-    public void introduceErrors(final Random rnd) {
-        final List<SAMRecord> reads = readList();
-        final ArrayList<SAMRecord> result = new ArrayList<>(reads.size());
-        for (final SAMRecord read : reads) {
-            result.add(new MySAMRecord(read,rnd));
-        }
-        readList = result;
-    }
-
-    private class MySAMRecord extends SAMRecord {
-            protected MySAMRecord(final SAMRecord r) {
-                super(r);
-                this.setMappingQuality(100);
-                GATKBin.setReadIndexingBin(this, -1);
-            }
-
-        ExponentialDistribution indelLengthDist = MathUtils.exponentialDistribution(1.0 / 0.9);
-
-        public MySAMRecord(final SAMRecord r, final Random rnd) {
-            super(r);
-            this.setMappingQuality(100);
-            // setting read indexing bin last
-
-            final byte[] bases = new byte[r.getReadBases().length];
-
-            final byte[] readBases = r.getReadBases();
-            final byte[] bq = r.getBaseQualities();
-            final byte[] iq = ReadUtils.getBaseInsertionQualities(r);
-            final byte[] dq = ReadUtils.getBaseDeletionQualities(r);
-            int refOffset = r.getAlignmentStart() - 1;
-            int readOffset = 0;
-            for (int i = 0; i < r.getReadBases().length;) {
-                double p = rnd.nextDouble();
-                double iqp = QualityUtils.qualToErrorProb(iq[i]);
-                if (p < iqp) { // insertion
-                    final int length = Math.min(generateIndelLength(rnd), r.getReadBases().length - i);
-                    final int refStart = rnd.nextInt(reference.length() - length);
-                    System.arraycopy(referenceBytes, refStart, bases, i, length);
-                    i += length;
-                    continue;
-                }
-                p -= iqp;
-                double dqp = QualityUtils.qualToErrorProb(dq[i]);
-                if (p < dqp) {
-                    final int length = generateIndelLength(rnd);
-                    refOffset += length;
-                    refOffset = refOffset % referenceBytes.length;
-                    readOffset += length;
-                    continue;
-                }
-                p -= dqp;
-                double bqp = QualityUtils.qualToErrorProb(bq[i]);
-                byte b = readOffset < readBases.length ? readBases[readOffset] : referenceBytes[refOffset];
-                byte nb;
-                if (p < bqp) {
-                   switch (b) {
-                       case 'A': nb = 'C'; break;
-                       case 'T': nb = 'A'; break;
-                       case 'C': nb = 'G'; break;
-                       case 'G': nb = 'B'; break;
-                       default: nb = 'A';
-                   }
-                } else
-                    nb = b;
-
-                bases[i++] = nb;
-                refOffset++;
-                refOffset = refOffset % referenceBytes.length;
-                readOffset++;
-            }
-            this.setReadBases(bases);
-            this.setBaseQualities(r.getBaseQualities());
-            this.setReadName(r.getReadName());
-
-            GATKBin.setReadIndexingBin(this, -1);
-        }
-
-        private int generateIndelLength(final Random rnd) {
-            final int length;
-            try {
-                length = (int) Math.round(indelLengthDist.inverseCumulativeProbability(rnd.nextDouble()) + 1);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return length;
-        }
-
-        @Override
-            public byte[] getBaseDeletionQualities() {
-                return Arrays.copyOf(dq, getReadLength());
-            }
-
-            @Override
-            public byte[] getBaseInsertionQualities() {
-                return Arrays.copyOf(iq, getReadLength());
-            }
-
-            @Override
-            public int getMappingQuality() {
-                return 100;
-            }
-
-            @Override
-            public int hashCode() {
-                return getReadName().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (o instanceof SAMRecord) {
-                    return getReadName().equals(((SAMRecord)o).getReadName());
-                } else {
-                    return false;
-                }
-            }
-
-            public String toString() {
-                return super.toString() + " " + this.getReadString();
-            }
-    }
-
 
     public List<String> readStrings() {
         final List<String> result = new ArrayList<>(readCigars.length);
@@ -408,9 +264,9 @@ public class AssemblyRegionTestDataSet {
         return result;
     }
 
-    private List<MySAMRecord> generateSamRecords(final List<String> haplotypes, final int readCount, final int readLength, final SAMFileHeader header, final int idStart) {
+    private List<SAMRecord> generateSamRecords(final List<String> haplotypes, final int readCount, final int readLength, final SAMFileHeader header, final int idStart) {
         int id = idStart;
-        final List<MySAMRecord> result = new ArrayList<>(readCount);
+        final List<SAMRecord> result = new ArrayList<>(readCount);
         for (int i = 0; i < readCount; i++) {
             int hi = i % haplotypes.size();
             final String h = haplotypes.get(hi);
@@ -419,7 +275,7 @@ public class AssemblyRegionTestDataSet {
             byte[] bases = h.substring(offset,to).getBytes();
             byte[] quals = Arrays.copyOf(bq, to - offset);
             final SAMRecord samRecord = ArtificialSAMUtils.createArtificialRead(header,"read_" + id++,0,offset + 1,bases, quals);
-            result.add(new MySAMRecord(samRecord));
+            result.add(samRecord);
         }
         return result;
     }

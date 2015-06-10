@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
 import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordCoordinateComparator;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.GenomeLocParser;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
@@ -161,7 +162,7 @@ public final class AssemblyRegion {
         if ( span == null ) throw new IllegalArgumentException("Active region extent cannot be null");
         if ( extension < 0) throw new IllegalArgumentException("the extension size must be 0 or greater");
         final int extendStart = Math.max(1,span.getStart() - extension);
-        final int maxStop = genomeLocParser.getContigs().getSequence(span.getContigIndex()).getSequenceLength();
+        final int maxStop = genomeLocParser.getSequenceDictionary().getSequence(span.getContigIndex()).getSequenceLength();
         final int extendStop = Math.min(span.getStop() + extension, maxStop);
         final GenomeLoc extendedSpan = genomeLocParser.createGenomeLoc(span.getContig(), extendStart, extendStop);
         return trim(span, extendedSpan);
@@ -222,14 +223,14 @@ public final class AssemblyRegion {
 
         final List<SAMRecord> trimmedReads = new ArrayList<>(myReads.size());
         for( final SAMRecord read : myReads ) {
-            final SAMRecord clippedRead = ReadClipper.hardClipToRegion(read,
-                    resultExtendedLocStart, resultExtendedLocStop);
+            final SAMRecord clippedRead = ReadClipper.hardClipToRegion(read, resultExtendedLocStart, resultExtendedLocStop);
             if( result.readOverlapsRegion(clippedRead) && clippedRead.getReadLength() > 0 ) {
                 trimmedReads.add(clippedRead);
             }
         }
         result.clearReads();
-        result.addAll(ReadUtils.sortReadsByCoordinate(trimmedReads));
+        trimmedReads.sort(new SAMRecordCoordinateComparator());
+        result.addAll(trimmedReads);
         return result;
     }
 

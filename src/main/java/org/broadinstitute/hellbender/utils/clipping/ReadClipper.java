@@ -307,6 +307,20 @@ public class ReadClipper {
     }
 
     /**
+     * Hard clip the read to the variable region (from refStart to refStop)
+     *
+     * @param read     the read to be clipped
+     * @param refStart the beginning of the variant region (inclusive)
+     * @param refStop  the end of the variant region (inclusive)
+     * @return the read hard clipped to the variant region
+     */
+    public static SAMRecord hardClipToRegion( final SAMRecord read, final int refStart, final int refStop ) {
+        final int start = read.getAlignmentStart();
+        final int stop = read.getAlignmentEnd();
+        return hardClipToRegion(read, refStart, refStop, start, stop);
+    }
+
+    /**
      * Hard clip the read to the variable region (from refStart to refStop) processing also the clipped bases
      *
      * @param read     the read to be clipped
