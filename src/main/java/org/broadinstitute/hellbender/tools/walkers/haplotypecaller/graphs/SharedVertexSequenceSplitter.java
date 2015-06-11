@@ -49,7 +49,7 @@ import java.util.*;
  *
  * to update the graph with the modifications created by this splitter
  */
-public class SharedVertexSequenceSplitter {
+public final class SharedVertexSequenceSplitter {
     final private SeqGraph outer;
     final protected SeqVertex prefixV, suffixV;
     final protected Collection<SeqVertex> toSplits;

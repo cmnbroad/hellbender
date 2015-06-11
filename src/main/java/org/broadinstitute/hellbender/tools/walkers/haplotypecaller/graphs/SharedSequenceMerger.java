@@ -14,7 +14,7 @@ import java.util.Set;
  * they all have the same sequence, merges them into the sequence of V, and updates the graph
  * as appropriate
  */
-public class SharedSequenceMerger {
+public final class SharedSequenceMerger {
     public SharedSequenceMerger() { }
 
     /**

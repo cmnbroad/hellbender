@@ -12,7 +12,7 @@ import java.util.*;
  * class to keep track of paths
  *
  */
-public class Path<T extends BaseVertex, E extends BaseEdge> {
+public final class Path<T extends BaseVertex, E extends BaseEdge> {
 
     // the last vertex seen in the path
     protected final T lastVertex;

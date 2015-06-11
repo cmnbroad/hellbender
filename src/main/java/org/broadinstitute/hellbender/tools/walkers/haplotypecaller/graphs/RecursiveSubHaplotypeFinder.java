@@ -25,8 +25,6 @@ import java.util.*;
 * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
 */
 class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<RecursiveSubHaplotypeFinder.EdgeSubHaplotypeFinder> {
-
-
     private final SeqVertex vertex;
     private final boolean isReference;
 

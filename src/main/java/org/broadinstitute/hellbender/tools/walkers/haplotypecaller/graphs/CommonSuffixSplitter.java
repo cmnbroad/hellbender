@@ -19,7 +19,7 @@ import java.util.*;
  * while respecting complex connectivity.
  *
  */
-public class CommonSuffixSplitter {
+public final class CommonSuffixSplitter {
     /**
      * Create a new graph that contains the vertices in toMerge with their shared suffix and prefix
      * sequences extracted out.

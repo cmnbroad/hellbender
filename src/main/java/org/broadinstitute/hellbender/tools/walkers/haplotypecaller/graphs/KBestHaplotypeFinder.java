@@ -14,7 +14,7 @@ import java.util.*;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-public class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> implements Iterable<KBestHaplotype> {
+public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> implements Iterable<KBestHaplotype> {
 
     /**
      * The search graph.

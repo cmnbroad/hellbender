@@ -11,7 +11,7 @@ import java.util.*;
  * but A -[1]> B -[2]> C -[1]> D would not be because the linear chain includes an edge with weight >= 2
  *
  */
-public class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge> {
+public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge> {
     private final int pruneFactor;
 
     public LowWeightChainPruner(int pruneFactor) {
