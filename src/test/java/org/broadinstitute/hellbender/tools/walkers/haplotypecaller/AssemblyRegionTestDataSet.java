@@ -125,7 +125,7 @@ public class AssemblyRegionTestDataSet {
         for (final Civar c : unrolledCivars) {
             final String baseString = c.applyTo(reference);
             final Haplotype haplotype = new Haplotype(baseString.getBytes(),baseString.equals(reference));
-            haplotype.setGenomeLocation(genomeLocParser.createGenomeLoc("chr1",1,reference.length()));
+            haplotype.setGenomeLocation(genomeLocParser.createGenomeLoc("1",1,reference.length()));
             try {
             haplotype.setCigar(c.toCigar(reference.length()));
             } catch (final RuntimeException ex) {

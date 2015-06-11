@@ -21,8 +21,7 @@ import java.util.*;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-public class AssemblyResultSetUnitTest extends BaseTest
-{
+public final class AssemblyResultSetUnitTest extends BaseTest{
     private GenomeLocParser genomeLocParser;
     private SAMFileHeader header;
 
@@ -51,7 +50,7 @@ public class AssemblyResultSetUnitTest extends BaseTest
     public void testAddReferenceHaplotype() {
 
         final Haplotype ref = new Haplotype("ACGT".getBytes(),true);
-        ref.setGenomeLocation(genomeLocParser.createGenomeLoc("chr1",1,ref.length() + 1 ));
+        ref.setGenomeLocation(genomeLocParser.createGenomeLoc("1",1,ref.length() + 1 ));
         final AssemblyResultSet subject = new AssemblyResultSet();
 
         Assert.assertTrue(subject.add(ref));
@@ -112,7 +111,7 @@ public class AssemblyResultSetUnitTest extends BaseTest
 
     @DataProvider(name="trimmingData")
     public Iterator<Object[]> trimmingData() {
-        final AssemblyRegion activeRegion = new AssemblyRegion(genomeLocParser.createGenomeLoc("chr1",1000,1100),genomeLocParser,25);
+        final AssemblyRegion activeRegion = new AssemblyRegion(genomeLocParser.createGenomeLoc("1",1000,1100),genomeLocParser,25);
         final int length = activeRegion.getExtendedSpan().size();
         final RandomDNA rnd = new RandomDNA(13); // keep it prepoducible by fixing the seed to lucky 13.
         final AssemblyRegionTestDataSet actd = new AssemblyRegionTestDataSet(10,new String(rnd.nextBases(length)),new String[] {
@@ -152,7 +151,7 @@ public class AssemblyResultSetUnitTest extends BaseTest
             final Haplotype[] haplotypes = new Haplotype[haplotypeStrings.length];
             for (int j = 0; j < haplotypeStrings.length; j++) {
                 haplotypes[j] = new Haplotype(((String)haplotypeStrings[j]).getBytes(),j == 0);
-                haplotypes[j].setGenomeLocation(genomeLocParser.createGenomeLoc("chr1",1,haplotypes[j].length() + 1));
+                haplotypes[j].setGenomeLocation(genomeLocParser.createGenomeLoc("1",1,haplotypes[j].length() + 1));
             }
             result[i] = new Object[] { Collections.singletonList(ar), Arrays.asList(Arrays.asList(haplotypes))};
             for (int j = 0; j < TEN_KS_GRAPH_AND_HAPLOTYPES.length; j++) {
@@ -163,7 +162,7 @@ public class AssemblyResultSetUnitTest extends BaseTest
                 final Haplotype[] haplotype10 = new Haplotype[haplotypeStrings10.length];
                 for (int k = 0; k < haplotypeStrings10.length; k++) {
                     haplotype10[k] = new Haplotype(((String)haplotypeStrings10[k]).getBytes(),false);
-                    haplotype10[k].setGenomeLocation(genomeLocParser.createGenomeLoc("chr1", 1, haplotype10[k].length() + 1));
+                    haplotype10[k].setGenomeLocation(genomeLocParser.createGenomeLoc("1", 1, haplotype10[k].length() + 1));
                 }
 
                 result[THREE_KS_GRAPH_AND_HAPLOTYPES.length + i * TEN_KS_GRAPH_AND_HAPLOTYPES.length + j] = new Object[] { Arrays.asList(ar, ar10),

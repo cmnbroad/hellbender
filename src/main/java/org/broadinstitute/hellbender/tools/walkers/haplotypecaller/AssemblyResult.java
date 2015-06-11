@@ -6,7 +6,7 @@ import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.readthreading
 /**
  * Result of assembling, with the resulting graph and status
  */
-public class AssemblyResult {
+public final class AssemblyResult {
     private final Status status;
     private ReadThreadingGraph threadingGraph;
     private final SeqGraph graph;
@@ -35,13 +35,17 @@ public class AssemblyResult {
         return threadingGraph;
     }
 
-    public Status getStatus() { return status; }
-    public SeqGraph getGraph() { return graph; }
+    public Status getStatus() {
+        return status;
+    }
+
+    public SeqGraph getGraph() {
+        return graph;
+    }
 
     public int getKmerSize() {
         return graph.getKmerSize();
     }
-
 
     /**
      * Status of the assembly result

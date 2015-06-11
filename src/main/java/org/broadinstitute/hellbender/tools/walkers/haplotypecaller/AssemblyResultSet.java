@@ -28,7 +28,7 @@ import java.util.*;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.com&gt;
  */
-public  class AssemblyResultSet {
+public final class AssemblyResultSet {
 
     private final Map<Integer,AssemblyResult> assemblyResultByKmerSize;
     private final Set<Haplotype> haplotypes;
