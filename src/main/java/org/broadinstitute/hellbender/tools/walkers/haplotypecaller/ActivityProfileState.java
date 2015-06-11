@@ -6,7 +6,7 @@ import org.broadinstitute.hellbender.utils.GenomeLoc;
  * The state of an active region walker's isActive call at a specific locus in the genome
  */
 public final class ActivityProfileState {
-    final private GenomeLoc loc;
+    private final GenomeLoc loc;
     public final double isActiveProb;
     public final Type resultState;
     public final Number resultValue;
@@ -38,10 +38,12 @@ public final class ActivityProfileState {
      */
     public ActivityProfileState(final GenomeLoc loc, final double isActiveProb, final Type resultState, final Number resultValue) {
         // make sure the location of that activity profile is 1
-        if ( loc.size() != 1 )
+        if ( loc.size() != 1 ) {
             throw new IllegalArgumentException("Location for an ActivityProfileState must have to size 1 bp but saw " + loc);
-        if ( resultValue != null && resultValue.doubleValue() < 0 )
+        }
+        if ( resultValue != null && resultValue.doubleValue() < 0 ) {
             throw new IllegalArgumentException("Result value isn't null and its < 0, which is illegal: " + resultValue);
+        }
 
         this.loc = loc;
         this.isActiveProb = isActiveProb;
@@ -57,7 +59,6 @@ public final class ActivityProfileState {
     public int getOffset(final GenomeLoc regionStartLoc) {
         return getLoc().getStart() - regionStartLoc.getStart();
     }
-
 
     /**
      * Get the genome loc associated with the ActivityProfileState
