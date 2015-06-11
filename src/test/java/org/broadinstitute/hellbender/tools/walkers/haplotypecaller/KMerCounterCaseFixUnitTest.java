@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-public class KMerCounterCaseFixUnitTest extends BaseTest {
+public final class KMerCounterCaseFixUnitTest extends BaseTest {
     @Test
 	public void testMyData() {
         final KMerCounter counter = new KMerCounter(3);

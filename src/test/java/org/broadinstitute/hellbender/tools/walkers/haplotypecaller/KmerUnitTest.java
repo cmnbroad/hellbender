@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class KmerUnitTest extends BaseTest {
+public final class KmerUnitTest extends BaseTest {
     @DataProvider(name = "KMerCreationData")
     public Object[][] makeKMerCreationData() {
         List<Object[]> tests = new ArrayList<Object[]>();

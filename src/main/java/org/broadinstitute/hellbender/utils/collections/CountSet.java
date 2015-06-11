@@ -270,7 +270,7 @@ public final class CountSet implements Cloneable, Set<Integer> {
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(final T[] a) {
         if (a == null)
-            throw new NullPointerException();
+            throw new IllegalArgumentException();
 
         @SuppressWarnings("unchecked")
         final Class<T> componentClass = (Class) a.getClass().getComponentType();
@@ -303,7 +303,7 @@ public final class CountSet implements Cloneable, Set<Integer> {
      */
     public void copyTo(final int[] dest, int offset) {
         if (dest == null)
-            throw new NullPointerException();
+            throw new IllegalArgumentException();
         if (dest.length < (size + offset))
             throw new ArrayIndexOutOfBoundsException("destination is to short");
         System.arraycopy(elements, 0, dest, offset, size);

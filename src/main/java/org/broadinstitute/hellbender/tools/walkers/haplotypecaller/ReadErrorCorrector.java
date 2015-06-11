@@ -52,7 +52,7 @@ import java.util.*;
  *
  *
 */
-public class ReadErrorCorrector {
+public final class ReadErrorCorrector {
     private final static Logger logger = LogManager.getLogger(ReadErrorCorrector.class);
     /**
      * A map of for each kmer to its num occurrences in addKmers

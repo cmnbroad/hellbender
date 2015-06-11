@@ -743,7 +743,7 @@ public class Civar {
 
         public static Civar parse(final CharSequence cs, final int from, final int to) {
             if (cs == null)
-                throw new NullPointerException("the input char-sequence cannot be null");
+                throw new IllegalArgumentException("the input char-sequence cannot be null");
             if (from < 0)
                 throw new IndexOutOfBoundsException("the from index cannot be negative");
             if (to < from)

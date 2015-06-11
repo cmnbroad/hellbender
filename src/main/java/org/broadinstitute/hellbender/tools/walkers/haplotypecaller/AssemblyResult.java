@@ -8,7 +8,7 @@ import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.readthreading
  */
 public final class AssemblyResult {
     private final Status status;
-    private ReadThreadingGraph threadingGraph;
+    private final ReadThreadingGraph threadingGraph;
     private final SeqGraph graph;
 
     /**
@@ -16,18 +16,12 @@ public final class AssemblyResult {
      * @param status the status, cannot be null
      * @param graph the resulting graph of the assembly, can only be null if result is failed
      */
-    public AssemblyResult(final Status status, final SeqGraph graph) {
+    public AssemblyResult(final Status status, final SeqGraph graph, final ReadThreadingGraph threadingGraph) {
         if ( status == null ) throw new IllegalArgumentException("status cannot be null");
         if ( status != Status.FAILED && graph == null ) throw new IllegalArgumentException("graph is null but status is " + status);
 
         this.status = status;
         this.graph = graph;
-    }
-
-    /**
-     * Returns the threading-graph associated with this assembly-result.
-     */
-    public void setThreadingGraph(final ReadThreadingGraph threadingGraph) {
         this.threadingGraph = threadingGraph;
     }
 

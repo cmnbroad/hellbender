@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ReadErrorCorrectorUnitTest {
+public final class ReadErrorCorrectorUnitTest {
     private static final boolean debug = true;
     final String refChunk = "GCATAAACATGGCTCACTGC";
     final String refChunkHard = "AGCCTTGAACTCCTGGGCTCAAGTGATCCTCCTGCCTCAGTTTCCCATGTAGCTGGGACCACAGGTGGGGGCTCCACCCCTGGCTGATTTTTTTTTTTTTTTTTTTTTGAGATAGGGT";

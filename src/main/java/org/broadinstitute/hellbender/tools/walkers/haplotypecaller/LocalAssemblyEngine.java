@@ -259,7 +259,7 @@ public abstract class LocalAssemblyEngine {
         // happen in cases where for example the reference somehow manages to acquire a cycle, or
         // where the entire assembly collapses back into the reference sequence.
         if ( seqGraph.getReferenceSourceVertex() == null || seqGraph.getReferenceSinkVertex() == null )
-            return new AssemblyResult(AssemblyResult.Status.JUST_ASSEMBLED_REFERENCE, seqGraph);
+            return new AssemblyResult(AssemblyResult.Status.JUST_ASSEMBLED_REFERENCE, seqGraph, null);
 
         seqGraph.removePathsNotConnectedToRef();
         seqGraph.simplifyGraph();
@@ -273,7 +273,7 @@ public abstract class LocalAssemblyEngine {
             seqGraph.addEdge(complete, dummy, new BaseEdge(true, 0));
         }
         printDebugGraphTransform(seqGraph, new File("sequenceGraph.5.final.dot"));
-        return new AssemblyResult(AssemblyResult.Status.ASSEMBLED_SOME_VARIATION, seqGraph);
+        return new AssemblyResult(AssemblyResult.Status.ASSEMBLED_SOME_VARIATION, seqGraph, null);
     }
 
     /**

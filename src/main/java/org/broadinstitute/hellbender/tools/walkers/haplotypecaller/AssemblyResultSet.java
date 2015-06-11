@@ -1,3 +1,4 @@
+
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
 import htsjdk.variant.variantcontext.VariantContext;
@@ -78,22 +79,28 @@ public final class AssemblyResultSet {
 
         final Map<Haplotype,Haplotype> originalByTrimmedHaplotypes = calculateOriginalByTrimmedHaplotypes(trimmedAssemblyRegion);
         if (refHaplotype == null) throw new IllegalStateException();
-        if (trimmedAssemblyRegion == null) throw new NullPointerException();
+        if (trimmedAssemblyRegion == null) throw new IllegalArgumentException();
         final AssemblyResultSet result = new AssemblyResultSet();
 
         for (final Haplotype trimmed : originalByTrimmedHaplotypes.keySet()) {
             final Haplotype original = originalByTrimmedHaplotypes.get(trimmed);
-            if (original == null)
-                throw new NullPointerException("all trimmed haplotypes must have an original one");
+            if (original == null) {
+                throw new IllegalStateException("all trimmed haplotypes must have an original one");
+            }
             final AssemblyResult as = assemblyResultByHaplotype.get(original);
-            if (as == null) result.add(trimmed); else result.add(trimmed, as);
+            if (as == null) {
+                result.add(trimmed);
+            } else {
+                result.add(trimmed, as);
+            }
         }
 
         result.setRegionForGenotyping(trimmedAssemblyRegion);
         result.setFullReferenceWithPadding(this.fullReferenceWithPadding);
         result.setPaddedReferenceLoc(this.paddedReferenceLoc);
-        if (result.refHaplotype == null)
+        if (result.refHaplotype == null) {
             throw new IllegalStateException("missing reference haplotype in the trimmed set");
+        }
         result.wasTrimmed = true;
         return result;
     }
@@ -117,9 +124,9 @@ public final class AssemblyResultSet {
                     }
                 } else
                     originalByTrimmedHaplotypes.put(trimmed,h);
-            } else if (h.isReference())
+            } else if (h.isReference()) {
                 throw new IllegalStateException("trimming eliminates the reference haplotype");
-            else if ( debug ) {
+            } else if ( debug ) {
                 logger.info("Throwing out haplotype " + h + " with cigar " + h.getCigar() +
                         " because it starts with or ends with an insertion or deletion when trimmed to " +
                         trimmedAssemblyRegion.getExtendedSpan());
@@ -132,16 +139,20 @@ public final class AssemblyResultSet {
         // resort the trimmed haplotypes.
         Collections.sort(trimmedHaplotypes, new HaplotypeSizeAndBaseComparator());
         final Map<Haplotype,Haplotype> sortedOriginalByTrimmedHaplotypes = new LinkedHashMap<>(trimmedHaplotypes.size());
-        for (final Haplotype trimmed : trimmedHaplotypes)
-            sortedOriginalByTrimmedHaplotypes.put(trimmed,originalByTrimmedHaplotypes.get(trimmed));
+        for (final Haplotype trimmed : trimmedHaplotypes) {
+            sortedOriginalByTrimmedHaplotypes.put(trimmed, originalByTrimmedHaplotypes.get(trimmed));
+        }
 
-
-        if ( debug ) logger.info("Trimmed region to " + trimmedAssemblyRegion.getSpan() + " size " +
-                trimmedAssemblyRegion.getSpan().size() + " reduced number of haplotypes from " +
-                haplotypeList.size() + " to only " + trimmedHaplotypes.size());
-        if ( debug )
-            for ( final Haplotype remaining: trimmedHaplotypes )
+        if ( debug ) {
+            logger.info("Trimmed region to " + trimmedAssemblyRegion.getSpan() + " size " +
+                    trimmedAssemblyRegion.getSpan().size() + " reduced number of haplotypes from " +
+                    haplotypeList.size() + " to only " + trimmedHaplotypes.size());
+        }
+        if ( debug ) {
+            for (final Haplotype remaining : trimmedHaplotypes) {
                 logger.info("Remains: " + remaining + " cigar " + remaining.getCigar());
+            }
+        }
         return sortedOriginalByTrimmedHaplotypes;
     }
 
@@ -174,7 +185,7 @@ public final class AssemblyResultSet {
      * @throws NullPointerException if {@code pw} is {@code null}.
      */
     public void debugDump(final PrintWriter pw) {
-        if (getHaplotypeList().size() == 0) {
+        if (getHaplotypeList().isEmpty()) {
             return;
         }
         pw.println("Active Region " + this.regionForGenotyping.getSpan());
@@ -192,12 +203,11 @@ public final class AssemblyResultSet {
                 kmerSizeToCount.put(kmerSize,1);
             }
         }
-        pw.println("Kmer sizes count " + kmerSizeToCount.entrySet().size() );
-        Integer[] kmerSizes = new Integer[kmerSizeToCount.size()];
-        kmerSizes = kmerSizeToCount.keySet().toArray(kmerSizes);
+        pw.println("Kmer sizes count " + kmerSizeToCount.entrySet().size());
+        final Integer[] kmerSizes = kmerSizeToCount.keySet().toArray(new Integer[kmerSizeToCount.size()]);
         Arrays.sort(kmerSizes);
         pw.println("Kmer sizes values " + Arrays.toString(kmerSizes));
-        for (int size : kmerSizes) {
+        for (final int size : kmerSizes) {
             pw.println("Kmer size " + size + " count " + kmerSizeToCount.get(size));
         }
     }
@@ -218,11 +228,15 @@ public final class AssemblyResultSet {
      * @return {@code true} if the assembly result set has been modified as a result of this call.
      */
     public boolean add(final Haplotype h) {
-        if (h == null) throw new NullPointerException("input haplotype cannot be null");
-        if (h.getGenomeLocation() == null)
+        if (h == null) {
+            throw new IllegalArgumentException("input haplotype cannot be null");
+        }
+        if (h.getGenomeLocation() == null) {
             throw new IllegalArgumentException("the haplotype provided must have a genomic location");
-        if (haplotypes.contains(h))
+        }
+        if (haplotypes.contains(h)) {
             return false;
+        }
         haplotypes.add(h);
         updateReferenceHaplotype(h);
         return true;
@@ -246,8 +260,8 @@ public final class AssemblyResultSet {
      * @return {@code true} iff this called changes the assembly result set.
      */
     public boolean add(final Haplotype h, final AssemblyResult ar) {
-        if (h == null) throw new NullPointerException("input haplotype cannot be null");
-        if (ar == null) throw new NullPointerException("input assembly-result cannot be null");
+        if (h == null) throw new IllegalArgumentException("input haplotype cannot be null");
+        if (ar == null) throw new IllegalArgumentException("input assembly-result cannot be null");
         if (h.getGenomeLocation() == null)
             throw new IllegalArgumentException("the haplotype provided must have a genomic location");
 
@@ -281,12 +295,14 @@ public final class AssemblyResultSet {
      * @return {@code true} iff this addition changed the assembly result set.
      */
     public boolean add(final AssemblyResult ar) {
-        if (ar == null)
-            throw new NullPointerException();
+        if (ar == null) {
+            throw new IllegalArgumentException("ar");
+        }
         final int kmerSize = ar.getKmerSize();
         if (assemblyResultByKmerSize.containsKey(kmerSize)) {
-            if (!assemblyResultByKmerSize.get(kmerSize).equals(ar))
+            if (!assemblyResultByKmerSize.get(kmerSize).equals(ar)) {
                 throw new IllegalStateException("a different assembly result with the same kmerSize was already added");
+            }
             return false;
         } else {
             assemblyResultByKmerSize.put(kmerSize, ar);
@@ -377,8 +393,9 @@ public final class AssemblyResultSet {
      * @return greater than 0.
      */
     public int getMaximumKmerSize() {
-        if (kmerSizes.size() == 0)
+        if (kmerSizes.size() == 0) {
             throw new IllegalStateException("there is yet no kmerSize in this assembly result set");
+        }
         return kmerSizes.max();
     }
 
@@ -399,8 +416,9 @@ public final class AssemblyResultSet {
      * @return greater than 0.
      */
     public int getMinimumKmerSize() {
-        if (kmerSizes.size() == 0)
+        if (kmerSizes.isEmpty()) {
             throw new IllegalStateException("there is yet no kmerSize in this assembly result set");
+        }
         return kmerSizes.min();
     }
 
@@ -471,10 +489,11 @@ public final class AssemblyResultSet {
      */
     private void updateReferenceHaplotype(final Haplotype newHaplotype) {
         if (!newHaplotype.isReference()) return;
-        if (refHaplotype == null)
+        if (refHaplotype == null) {
             refHaplotype = newHaplotype;
-        else // assumes that we have checked wether the haplotype is already in the collection and so is no need to check equality.
+        } else {// assumes that we have checked wether the haplotype is already in the collection and so is no need to check equality.
             throw new IllegalStateException("the assembly-result-set already have a reference haplotype that is different");
+        }
     }
 
     /**

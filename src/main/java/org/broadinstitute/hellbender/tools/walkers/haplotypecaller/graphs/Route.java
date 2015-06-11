@@ -76,7 +76,7 @@ public class Route<V extends BaseVertex, E extends BaseEdge> extends Path<V,E> {
      * Resolves the prefix edge as required by {@link Route(V,Route)}.
      */
     private static <V extends BaseVertex,E extends BaseEdge>  E resolvePrefixEdge(final V prevVertex, final Route<V, E> suffix) {
-        if (prevVertex == null) throw new NullPointerException();
+        if (prevVertex == null) throw new IllegalArgumentException();
         if (!suffix.getGraph().containsVertex(prevVertex)) throw new IllegalArgumentException();
         final E result = suffix.getGraph().getEdge(prevVertex,suffix.getFirstVertex());
         if (result == null)

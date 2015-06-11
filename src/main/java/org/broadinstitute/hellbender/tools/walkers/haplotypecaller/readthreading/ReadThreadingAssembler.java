@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ReadThreadingAssembler extends LocalAssemblyEngine {
+public final class ReadThreadingAssembler extends LocalAssemblyEngine {
     private final static Logger logger = LogManager.getLogger(ReadThreadingAssembler.class);
 
     private final static int DEFAULT_NUM_PATHS_PER_GRAPH = 128;
@@ -103,7 +103,7 @@ public class ReadThreadingAssembler extends LocalAssemblyEngine {
                                          final boolean allowNonUniqueKmersInRef) {
         if ( refHaplotype.length() < kmerSize ) {
             // happens in cases where the assembled region is just too small
-            return new AssemblyResult(AssemblyResult.Status.FAILED, null);
+            return new AssemblyResult(AssemblyResult.Status.FAILED, null, null);
         }
 
         if ( !allowNonUniqueKmersInRef && !ReadThreadingGraph.determineNonUniqueKmers(new SequenceForKmers("ref", refHaplotype.getBases(), 0, refHaplotype.getBases().length, 1, true), kmerSize).isEmpty() ) {
@@ -167,7 +167,7 @@ public class ReadThreadingAssembler extends LocalAssemblyEngine {
         if (debugGraphTransformations) initialSeqGraph.printGraph(new File("" + refHaplotype.getLocation() + "-sequenceGraph." + kmerSize + ".0.1.initial_seqgraph.dot"),10000);
 
         // if the unit tests don't want us to cleanup the graph, just return the raw sequence graph
-        if ( justReturnRawGraph ) return new AssemblyResult(AssemblyResult.Status.ASSEMBLED_SOME_VARIATION, initialSeqGraph);
+        if ( justReturnRawGraph ) return new AssemblyResult(AssemblyResult.Status.ASSEMBLED_SOME_VARIATION, initialSeqGraph, null);
 
         if (debug) logger.info("Using kmer size of " + rtgraph.getKmerSize() + " in read threading assembler");
         printDebugGraphTransform(initialSeqGraph, new File( "" + refHaplotype.getLocation() + "-sequenceGraph." + kmerSize + ".0.2.initial_seqgraph.dot"));
@@ -175,8 +175,7 @@ public class ReadThreadingAssembler extends LocalAssemblyEngine {
 
         final AssemblyResult cleaned = cleanupSeqGraph(initialSeqGraph);
         final AssemblyResult.Status status = cleaned.getStatus();
-        final AssemblyResult result = new AssemblyResult(status, cleaned.getGraph());
-        result.setThreadingGraph(rtgraph);
+        final AssemblyResult result = new AssemblyResult(status, cleaned.getGraph(), rtgraph);
         return result;
     }
 

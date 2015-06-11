@@ -7,7 +7,7 @@ import java.util.*;
  *
  * Basically you add kmers to the counter, and it tells you how many occurrences of each kmer it's seen.
  */
-public class KMerCounter {
+public final class KMerCounter {
     //private final static Logger logger = Logger.getLogger(KMerCounter.class);
 
     /**
