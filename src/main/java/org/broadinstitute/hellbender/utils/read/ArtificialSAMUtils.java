@@ -130,7 +130,7 @@ public final class ArtificialSAMUtils {
         SAMRecord rec = createArtificialRead(header, name, refIndex, alignmentStart, bases.length);
         rec.setReadBases(Arrays.copyOf(bases, bases.length));
         rec.setBaseQualities(Arrays.copyOf(qual, qual.length));
-        rec.setAttribute(SAMTag.PG.name(), new SAMReadGroupRecord("x").getId());
+        ReadUtils.setReadGroup(rec, new SAMReadGroupRecord("x"));
         if (refIndex == -1) {
             rec.setReadUnmappedFlag(true);
         }

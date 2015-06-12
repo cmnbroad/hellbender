@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.utils.read;
 
 import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.TextCigarCodec;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.broadinstitute.hellbender.utils.iterators.GATKSAMIterator;
 import org.testng.annotations.Test;
@@ -8,6 +9,13 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 public final class ArtificialSAMUtilsUnitTest extends BaseTest {
+
+    @Test
+    public void testReadGroup() {
+        SAMRecord read = ArtificialSAMUtils.createArtificialRead(TextCigarCodec.decode("10M"));
+        assertTrue(read.getReadGroup() != null);
+    }
+
 
 
     @Test
