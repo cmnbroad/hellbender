@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class BaseVertex {
     /** placeholder to store additional information for debugging purposes */
     String additionalInfo = "";
-    final byte[] sequence;
+    protected final byte[] sequence;
     private final static int UNASSIGNED_HASHCODE = -1;
     int cachedHashCode = UNASSIGNED_HASHCODE;
 

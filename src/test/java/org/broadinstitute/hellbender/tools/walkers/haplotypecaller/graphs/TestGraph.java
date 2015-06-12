@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.readthreading.MultiDeBruijnVertex;
 import org.jgrapht.EdgeFactory;
 
 import java.util.HashMap;
@@ -8,7 +9,7 @@ import java.util.Map;
 /**
  * A Test kmer graph
  */
-public class TestGraph extends BaseGraph<DeBruijnVertex, BaseEdge> {
+public class TestGraph extends BaseGraph<MultiDeBruijnVertex, BaseEdge> {
     public TestGraph clone() {
         return (TestGraph) super.clone();
     }
@@ -16,9 +17,9 @@ public class TestGraph extends BaseGraph<DeBruijnVertex, BaseEdge> {
     /**
      * Edge factory that creates non-reference multiplicity 1 edges
      */
-    private static class MyEdgeFactory implements EdgeFactory<DeBruijnVertex, BaseEdge> {
+    private static class MyEdgeFactory implements EdgeFactory<MultiDeBruijnVertex, BaseEdge> {
         @Override
-        public BaseEdge createEdge(DeBruijnVertex sourceVertex, DeBruijnVertex targetVertex) {
+        public BaseEdge createEdge(MultiDeBruijnVertex sourceVertex, MultiDeBruijnVertex targetVertex) {
             return new BaseEdge(false, 1);
         }
     }
@@ -50,8 +51,8 @@ public class TestGraph extends BaseGraph<DeBruijnVertex, BaseEdge> {
         if( kmer2 == null ) { throw new IllegalArgumentException("Attempting to add a null kmer to the graph."); }
         if( kmer1.length != kmer2.length ) { throw new IllegalArgumentException("Attempting to add a kmers to the graph with different lengths."); }
 
-        final DeBruijnVertex v1 = new DeBruijnVertex( kmer1 );
-        final DeBruijnVertex v2 = new DeBruijnVertex( kmer2 );
+        final MultiDeBruijnVertex v1 = new MultiDeBruijnVertex( kmer1 );
+        final MultiDeBruijnVertex v2 = new MultiDeBruijnVertex( kmer2 );
         final BaseEdge toAdd = new BaseEdge(isRef, multiplicity);
 
         addVertices(v1, v2);
@@ -68,10 +69,10 @@ public class TestGraph extends BaseGraph<DeBruijnVertex, BaseEdge> {
      */
     public SeqGraph convertToSequenceGraph() {
         final SeqGraph seqGraph = new SeqGraph(getKmerSize());
-        final Map<DeBruijnVertex, SeqVertex> vertexMap = new HashMap<>();
+        final Map<MultiDeBruijnVertex, SeqVertex> vertexMap = new HashMap<>();
 
         // create all of the equivalent seq graph vertices
-        for ( final DeBruijnVertex dv : vertexSet() ) {
+        for ( final MultiDeBruijnVertex dv : vertexSet() ) {
             final SeqVertex sv = new SeqVertex(dv.getAdditionalSequence(isSource(dv)));
             vertexMap.put(dv, sv);
             seqGraph.addVertex(sv);
