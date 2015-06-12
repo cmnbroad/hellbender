@@ -98,10 +98,12 @@ public class BaseEdge {
      * Sorts a collection of BaseEdges in decreasing order of weight, so that the most
      * heavily weighted is at the start of the list
      */
-    public static class EdgeWeightComparator implements Comparator<BaseEdge>, Serializable {
+    public static final class EdgeWeightComparator implements Comparator<BaseEdge>, Serializable {
+        private static final long serialVersionUID = 1l;
+
         @Override
         public int compare(final BaseEdge edge1, final BaseEdge edge2) {
-            return edge2.multiplicity - edge1.multiplicity;
+            return Integer.compare(edge2.multiplicity, edge1.multiplicity);
         }
     }
 
@@ -122,16 +124,18 @@ public class BaseEdge {
     }
 
     /**
-     * Create a new BaseEdge with multiplicity and isRef that's an or of all edges
+     * Create a new BaseEdge with given multiplicity and isRef that's an or of all edges
      *
      * @param edges a collection of edges to or their isRef values
      * @param multiplicity our desired multiplicity
      * @return a newly allocated BaseEdge
      */
     public static BaseEdge orRef(final Collection<BaseEdge> edges, final int multiplicity) {
-        for ( final BaseEdge e : edges )
-            if ( e.isRef() )
+        for ( final BaseEdge e : edges ) {
+            if (e.isRef()) {
                 return new BaseEdge(true, multiplicity);
+            }
+        }
         return new BaseEdge(false, multiplicity);
     }
 
