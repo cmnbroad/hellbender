@@ -26,9 +26,14 @@ public final class EmptyPathHaplotypeFinderNodeUnitTest {
     @Test
     public void testID(){
         final SeqGraph g = new SeqGraph(5);
-        final SeqVertex v = new SeqVertex("acgt");
-        final EmptyPathHaplotypeFinderNode f = new EmptyPathHaplotypeFinderNode(g, v);
-        Assert.assertEquals(f.id(), "v1");
+        final SeqVertex v1 = new SeqVertex("acgt");
+        final SeqVertex v2 = new SeqVertex("fred");
+        final EmptyPathHaplotypeFinderNode f1 = new EmptyPathHaplotypeFinderNode(g, v1);
+        final EmptyPathHaplotypeFinderNode f2 = new EmptyPathHaplotypeFinderNode(g, v1);
+        final EmptyPathHaplotypeFinderNode f3 = new EmptyPathHaplotypeFinderNode(g, v2);
+        Assert.assertEquals(f1.id(), f2.id());
+        Assert.assertNotEquals(f1.id(), f3.id());
+        Assert.assertNotEquals(f2.id(), f3.id());
     }
 
     @Test
