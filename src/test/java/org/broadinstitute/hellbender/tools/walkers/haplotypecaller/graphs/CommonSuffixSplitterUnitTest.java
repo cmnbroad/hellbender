@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.Arrays;
 
-public class CommonSuffixSplitterUnitTest extends BaseTest {
+public final class CommonSuffixSplitterUnitTest extends BaseTest {
     private final static boolean DEBUG = false;
 
     @DataProvider(name = "SplitData")
@@ -22,8 +22,7 @@ public class CommonSuffixSplitterUnitTest extends BaseTest {
 
         final SeqGraph original = (SeqGraph)data.graph.clone();
 //        original.printGraph(new File("original.dot"), 0);
-        final CommonSuffixSplitter splitter = new CommonSuffixSplitter();
-        final boolean succeed = splitter.split(data.graph, data.v);
+        final boolean succeed = CommonSuffixSplitter.split(data.graph, data.v);
 //        data.graph.printGraph(new File("actual.dot"), 0);
         Assert.assertEquals(succeed, expectedMerge, "Not excepted merge success/fail result");
         if ( succeed ) {
@@ -44,12 +43,12 @@ public class CommonSuffixSplitterUnitTest extends BaseTest {
         original.addVertices(v1, v2, v3, v4);
         original.addEdges(v1, v3);
 
-        Assert.assertFalse(new CommonSuffixSplitter().split(original, v3), "Cannot split graph with only one vertex");
+        Assert.assertFalse(CommonSuffixSplitter.split(original, v3), "Cannot split graph with only one vertex");
 
         original.addEdges(v2, v3);
         original.addEdges(v2, v4);
 
-        Assert.assertFalse(new CommonSuffixSplitter().split(original, v3), "Cannot split graph with multiple outgoing edges from middle nodes");
+        Assert.assertFalse(CommonSuffixSplitter.split(original, v3), "Cannot split graph with multiple outgoing edges from middle nodes");
     }
 
     @Test(enabled = !DEBUG)
@@ -64,10 +63,10 @@ public class CommonSuffixSplitterUnitTest extends BaseTest {
         original.addEdges(v1, v3, v4);
         original.addEdges(v1, v2, v4);
 
-        Assert.assertTrue(new CommonSuffixSplitter().split((SeqGraph) original.clone(), v4), "Should be able to split pre-cycle graph");
+        Assert.assertTrue(CommonSuffixSplitter.split((SeqGraph) original.clone(), v4), "Should be able to split pre-cycle graph");
 
         original.addEdges(v4, v4);
-        Assert.assertFalse(new CommonSuffixSplitter().split(original, v4), "Cannot split graph with a cycle of the bottom list");
+        Assert.assertFalse(CommonSuffixSplitter.split(original, v4), "Cannot split graph with a cycle of the bottom list");
     }
 
     @Test(timeOut = 10000, enabled = !DEBUG)
@@ -88,7 +87,7 @@ public class CommonSuffixSplitterUnitTest extends BaseTest {
 
         for ( final SeqVertex v : Arrays.asList(cat2) ) { // original.vertexSet() ) {
             final SeqGraph graph = (SeqGraph)original.clone();
-            final boolean success = new CommonSuffixSplitter().split(graph, v);
+            final boolean success = CommonSuffixSplitter.split(graph, v);
             if ( success ) graph.printGraph(new File("testSplitComplexCycle.fail.dot"), 0);
             Assert.assertFalse(success, "Shouldn't be able to split any vertices but CommonSuffixSplitter says it could for " + v);
         }
@@ -111,12 +110,12 @@ public class CommonSuffixSplitterUnitTest extends BaseTest {
 //        original.printGraph(new File("testSplitInfiniteCycleFailure.dot"), 0);
 
         final SeqGraph graph = (SeqGraph)original.clone();
-        final boolean success = new CommonSuffixSplitter().split(graph, v2);
+        final boolean success = CommonSuffixSplitter.split(graph, v2);
         Assert.assertTrue(success);
 
         for ( final SeqVertex v : graph.vertexSet() ) {
 //            graph.printGraph(new File("testSplitInfiniteCycleFailure.first_split.dot"), 0);
-            final boolean success2 = new CommonSuffixSplitter().split((SeqGraph)graph.clone(), v);
+            final boolean success2 = CommonSuffixSplitter.split((SeqGraph)graph.clone(), v);
 //            if ( success2 ) graph.printGraph(new File("testSplitInfiniteCycleFailure.fail.dot"), 0);
             Assert.assertFalse(success2, "Shouldn't be able to split any vertices but CommonSuffixSplitter says it could for " + v);
         }

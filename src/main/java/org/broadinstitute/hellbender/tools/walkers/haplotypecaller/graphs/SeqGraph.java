@@ -435,7 +435,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
                 return false;
             else {
                 alreadySplit.add(bottom);
-                return new CommonSuffixSplitter().split(SeqGraph.this, bottom);
+                return CommonSuffixSplitter.split(SeqGraph.this, bottom);
             }
         }
     }

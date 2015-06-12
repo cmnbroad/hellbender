@@ -20,12 +20,8 @@ import java.util.*;
  *
  */
 public final class CommonSuffixSplitter {
-    /**
-     * Create a new graph that contains the vertices in toMerge with their shared suffix and prefix
-     * sequences extracted out.
-     *
-     */
-    public CommonSuffixSplitter() {}
+
+    private CommonSuffixSplitter() {}
 
     /**
      * Simple single-function interface to split and then update a graph
@@ -34,7 +30,7 @@ public final class CommonSuffixSplitter {
      * @param v The bottom node whose incoming vertices we'd like to split
      * @return true if some useful splitting was done, false otherwise
      */
-    public boolean split(final SeqGraph graph, final SeqVertex v) {
+    public static boolean split(final SeqGraph graph, final SeqVertex v) {
         if ( graph == null ) throw new IllegalArgumentException("graph cannot be null");
         if ( v == null ) throw new IllegalArgumentException("v cannot be null");
         if ( ! graph.vertexSet().contains(v) ) throw new IllegalArgumentException("graph doesn't contain vertex v " + v);
@@ -99,7 +95,7 @@ public final class CommonSuffixSplitter {
      * @param toSplits the list of vertices we're are trying to split
      * @return true if toSplit contains the reference source and this ref source has all and only the bases of commonSuffix
      */
-    private boolean wouldEliminateRefSource(final SeqGraph graph, final SeqVertex commonSuffix, final Collection<SeqVertex> toSplits) {
+    private static boolean wouldEliminateRefSource(final SeqGraph graph, final SeqVertex commonSuffix, final Collection<SeqVertex> toSplits) {
         for ( final SeqVertex toSplit : toSplits ) {
             if ( graph.isRefSource(toSplit) )
                 return toSplit.length() == commonSuffix.length();
@@ -119,7 +115,7 @@ public final class CommonSuffixSplitter {
      * @param toSplits the collection of vertices we want to split
      * @return true if all of the vertices are equal to the common suffix
      */
-    private boolean allVerticesAreTheCommonSuffix(final SeqVertex commonSuffix, final Collection<SeqVertex> toSplits) {
+    private static boolean allVerticesAreTheCommonSuffix(final SeqVertex commonSuffix, final Collection<SeqVertex> toSplits) {
         for ( final SeqVertex toSplit : toSplits ) {
             if ( toSplit.length() != commonSuffix.length() )
                 return false;
@@ -136,7 +132,7 @@ public final class CommonSuffixSplitter {
      * @param toMerge the set of vertices we'd be splitting up
      * @return true if we can safely split up toMerge
      */
-    private boolean safeToSplit(final SeqGraph graph, final SeqVertex bot, final Collection<SeqVertex> toMerge) {
+    private static boolean safeToSplit(final SeqGraph graph, final SeqVertex bot, final Collection<SeqVertex> toMerge) {
         final Set<SeqVertex> outgoingOfBot = new HashSet<>(graph.outgoingVerticesOf(bot));
         for ( final SeqVertex m : toMerge ) {
             final Set<BaseEdge> outs = graph.outgoingEdgesOf(m);
@@ -161,7 +157,7 @@ public final class CommonSuffixSplitter {
      * @param middleVertices a non-empty set of vertices
      * @return a single vertex that contains the common suffix of all middle vertices
      */
-    protected static SeqVertex commonSuffix(final Collection<SeqVertex> middleVertices) {
+    public static SeqVertex commonSuffix(final Collection<SeqVertex> middleVertices) {
         final List<byte[]> kmers = GraphUtils.getKmers(middleVertices);
         final int min = GraphUtils.minKmerLength(kmers);
         final int suffixLen = GraphUtils.compSuffixLen(kmers, min);
