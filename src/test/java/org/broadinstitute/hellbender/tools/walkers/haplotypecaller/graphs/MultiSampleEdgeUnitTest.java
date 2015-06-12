@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class MultiSampleEdgeUnitTest extends BaseTest {
+public final class MultiSampleEdgeUnitTest extends BaseTest {
 
     private class MultiplicityTestProvider {
         final List<Integer> countsPerSample;
@@ -46,6 +46,13 @@ public class MultiSampleEdgeUnitTest extends BaseTest {
         final MultiSampleEdge edge = new MultiSampleEdge(false, 0, cfg.numSamplesPruning);
         Assert.assertEquals(edge.getMultiplicity(), 0);
         Assert.assertEquals(edge.getPruningMultiplicity(), 0);
+
+        final MultiSampleEdge copy = edge.copy();
+        Assert.assertEquals(edge.getCurrentSingleSampleMultiplicity(), copy.getCurrentSingleSampleMultiplicity());
+        Assert.assertEquals(edge.getDotLabel(), copy.getDotLabel());
+        Assert.assertEquals(edge.getPruningMultiplicity(), copy.getPruningMultiplicity());
+        Assert.assertEquals(edge.getMultiplicity(), copy.getMultiplicity());
+        Assert.assertEquals(edge.getClass(), copy.getClass());
 
         int total = 0;
         for ( int i = 0; i < cfg.countsPerSample.size(); i++ ) {

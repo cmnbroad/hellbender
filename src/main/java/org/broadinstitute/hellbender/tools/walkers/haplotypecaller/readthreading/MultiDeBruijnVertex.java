@@ -17,9 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class MultiDeBruijnVertex extends DeBruijnVertex {
     private final static boolean KEEP_TRACK_OF_READS = false;
 
-    // Note that using an AtomicInteger is critical to allow multi-threaded HaplotypeCaller
-    private static final AtomicInteger idCounter = new AtomicInteger(0);
-    private int id = idCounter.getAndIncrement();
+    private static int idCounter = 0; //global counter
+    private final int id = idCounter++;
 
     private final List<String> reads = new LinkedList<>();
 
@@ -27,12 +26,12 @@ public final class MultiDeBruijnVertex extends DeBruijnVertex {
      * Create a new MultiDeBruijnVertex with kmer sequence
      * @param sequence the kmer sequence
      */
-    MultiDeBruijnVertex(byte[] sequence) {
+    public MultiDeBruijnVertex(final byte[] sequence) {
         super(sequence);
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -56,7 +55,7 @@ public final class MultiDeBruijnVertex extends DeBruijnVertex {
      *
      * @param name a non-null string
      */
-    protected void addRead(final String name) {
+    public void addRead(final String name) {
         if ( name == null ) throw new IllegalArgumentException("name cannot be null");
         if ( KEEP_TRACK_OF_READS ) reads.add(name);
     }
@@ -69,7 +68,7 @@ public final class MultiDeBruijnVertex extends DeBruijnVertex {
         return super.additionalInfo() + (KEEP_TRACK_OF_READS ? (! reads.contains("ref") ? "__" + Utils.join(",", reads) : "") : "");
     }
 
-     int getId() {
+    public int getId() {
         return id;
     }
 }

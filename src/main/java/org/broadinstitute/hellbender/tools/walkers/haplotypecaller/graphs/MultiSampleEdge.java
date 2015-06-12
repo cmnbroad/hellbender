@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.PriorityQueue;
 
 /**
@@ -22,7 +24,7 @@ import java.util.PriorityQueue;
  * }
  * </pre>
  */
-public class MultiSampleEdge extends BaseEdge {
+public final class MultiSampleEdge extends BaseEdge {
     private int currentSingleSampleMultiplicity;
     private final int singleSampleCapacity;
     private final PriorityQueue<Integer> singleSampleMultiplicities;
@@ -79,8 +81,8 @@ public class MultiSampleEdge extends BaseEdge {
         return super.getDotLabel() + "/" + getPruningMultiplicity();
     }
 
-    /** only provided for testing purposes */
-    protected int getCurrentSingleSampleMultiplicity() {
+    @VisibleForTesting
+    int getCurrentSingleSampleMultiplicity() {
         return currentSingleSampleMultiplicity;
     }
 }

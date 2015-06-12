@@ -13,7 +13,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
-public class BaseGraph<V extends BaseVertex, E extends BaseEdge> extends DefaultDirectedGraph<V, E> {
+public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extends DefaultDirectedGraph<V, E> {
     protected final static Logger logger = LogManager.getLogger(BaseGraph.class);
     protected final int kmerSize;
 
@@ -23,7 +23,6 @@ public class BaseGraph<V extends BaseVertex, E extends BaseEdge> extends Default
      */
     public BaseGraph(final int kmerSize, final EdgeFactory<V,E> edgeFactory) {
         super(edgeFactory);
-
         if ( kmerSize < 1 ) throw new IllegalArgumentException("kmerSize must be >= 1 but got " + kmerSize);
         this.kmerSize = kmerSize;
     }
