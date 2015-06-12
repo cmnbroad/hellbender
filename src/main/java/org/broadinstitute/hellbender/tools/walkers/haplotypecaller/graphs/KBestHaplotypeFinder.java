@@ -24,17 +24,17 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
     /**
      * Map of sub-haplotype finder by their source vertex.
      */
-    protected Map<SeqVertex,KBestSubHaplotypeFinder> finderByVertex;
+    public Map<SeqVertex,KBestSubHaplotypeFinder> finderByVertex;
 
     /**
      * Possible haplotype sink vertices.
      */
-    protected Set<SeqVertex> sinks;
+    public Set<SeqVertex> sinks;
 
     /**
      * Possible haplotype source vertices.
      */
-    protected Set<SeqVertex> sources;
+    public Set<SeqVertex> sources;
 
     /**
      * The top finder.

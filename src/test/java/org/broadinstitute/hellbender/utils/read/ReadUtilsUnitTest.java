@@ -322,6 +322,7 @@ public final class ReadUtilsUnitTest extends BaseTest {
         String id= "MY.ID";
         SAMReadGroupRecord rg = new SAMReadGroupRecord(id);
         ReadUtils.setReadGroup(read, rg);
+        ReadUtils.setReadGroup(read, rg);
 
         Assert.assertNotNull(read.getHeader(), "header");
 

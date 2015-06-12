@@ -561,9 +561,11 @@ public final class ReadUtils {
         return quals;
     }
 
-    public static void setReadGroup(SAMRecord read, SAMReadGroupRecord readGroup) {
+    public static void setReadGroup(final SAMRecord read, final SAMReadGroupRecord readGroup) {
         final SAMFileHeader header= read.getHeader();
-        header.addReadGroup(readGroup);
+        if (header.getReadGroup(readGroup.getReadGroupId()) == null) {
+            header.addReadGroup(readGroup);
+        }
         read.setHeader(header);
         read.setAttribute(SAMTag.RG.name(), readGroup.getId());
     }

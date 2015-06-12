@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-public class KBestHaplotypeFinderUnitTest extends BaseTest {
+public final class KBestHaplotypeFinderUnitTest extends BaseTest {
 
     @DataProvider(name = "BasicPathFindingData")
     public Object[][] makeBasicPathFindingData() {
@@ -161,7 +161,7 @@ public class KBestHaplotypeFinderUnitTest extends BaseTest {
         }
 
         // enumerate all possible paths
-        final List<KBestHaplotype> paths = new KBestHaplotypeFinder(graph,graph.getSources(),graph.getSinks());
+        final List<KBestHaplotype> paths = new KBestHaplotypeFinder(graph);
         Assert.assertEquals(paths.size(), 1);
         final Path<SeqVertex,BaseEdge> path = paths.get(0).path();
         Assert.assertEquals(new String(path.getBases()), Utils.join("", frags), "Path doesn't have the expected sequence");
