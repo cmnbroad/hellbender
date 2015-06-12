@@ -8,9 +8,12 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
-public class GraphUtilsUnitTest extends BaseTest {
+import static org.broadinstitute.hellbender.utils.Utils.reverse;
+
+public final class GraphUtilsUnitTest extends BaseTest {
     @DataProvider(name = "findLongestUniqueMatchData")
     public Object[][] makefindLongestUniqueMatchData() {
         List<Object[]> tests = new ArrayList<>();
@@ -71,4 +74,67 @@ public class GraphUtilsUnitTest extends BaseTest {
             Assert.assertEquals(actual.second, length);
         }
     }
+
+    @Test
+    public void compPrefixLen1(){
+        final List<byte[]> bytes = Arrays.asList("ABC".getBytes(), "CDE".getBytes());
+        final int pref = GraphUtils.compPrefixLen(bytes, 3);
+        Assert.assertEquals(pref, 0);
+    }
+
+    @Test
+    public void compPrefixLen2(){
+        final List<byte[]> bytes = Arrays.asList("ABC".getBytes(), "ABD".getBytes());
+        final int pref = GraphUtils.compPrefixLen(bytes, 3);
+        Assert.assertEquals(pref, 2);
+    }
+
+    @Test
+    public void compPrefixLen3(){
+        final List<byte[]> bytes = Arrays.asList("ABC".getBytes(), "ABD".getBytes());
+        final int pref = GraphUtils.compPrefixLen(bytes, 1);
+        Assert.assertEquals(pref, 1);
+    }
+
+    @Test
+    public void compSuffixLen1(){
+        final List<byte[]> bytes = Arrays.asList(reverse("ABC".getBytes()), reverse("CDE".getBytes()));
+        final int pref = GraphUtils.compSuffixLen(bytes, 3);
+        Assert.assertEquals(pref, 0);
+    }
+
+    @Test
+    public void compSuffixLen2(){
+        final List<byte[]> bytes = Arrays.asList(reverse("ABC".getBytes()), reverse("ABD".getBytes()));
+        final int pref = GraphUtils.compSuffixLen(bytes, 3);
+        Assert.assertEquals(pref, 2);
+    }
+
+    @Test
+    public void compSuffixLen3(){
+        final List<byte[]> bytes = Arrays.asList(reverse("ABC".getBytes()), reverse("ABD".getBytes()));
+        final int pref = GraphUtils.compSuffixLen(bytes, 1);
+        Assert.assertEquals(pref, 1);
+    }
+
+    @Test
+    public void kMers(){
+        final SeqVertex v1 = new SeqVertex("fred");
+        final SeqVertex v2 = new SeqVertex("frodo");
+        final Collection<SeqVertex> vertices = Arrays.asList(v1, v2);
+        final List<byte[]> kmers = GraphUtils.getKmers(vertices);
+        Assert.assertEquals(kmers.size(), 2);
+        Assert.assertTrue(Arrays.equals(kmers.get(0), "fred".getBytes()));
+        Assert.assertTrue(Arrays.equals(kmers.get(1), "frodo".getBytes()));
+    }
+
+    @Test
+    public void minKmerLength(){
+        final SeqVertex v1 = new SeqVertex("fred");
+        final SeqVertex v2 = new SeqVertex("frodo");
+        final Collection<SeqVertex> vertices = Arrays.asList(v1, v2);
+        final List<byte[]> kmers = GraphUtils.getKmers(vertices);
+        Assert.assertEquals(GraphUtils.minKmerLength(kmers), 4);
+    }
+
 }
