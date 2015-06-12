@@ -23,6 +23,8 @@ import htsjdk.samtools.util.Locatable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.dev.tools.walkers.bqsr.BaseRecalibrationArgumentCollection;
+import org.broadinstitute.hellbender.dev.tools.walkers.bqsr.BaseRecalibratorWorker;
+import org.broadinstitute.hellbender.tools.recalibration.QuantizationInfo;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationTables;
 import org.broadinstitute.hellbender.tools.walkers.bqsr.RecalibrationEngine;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -53,7 +55,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
   public static final TupleTag<RecalibrationTables> tablesTag = new TupleTag<>();
 
   /**
-   * Get a single RecalibrationTables object that represents the output of phase 1 of BQSR.
+   * Get a single RecalibrationTables object that represents partial output of phase 1 of BQSR.
    * <p>
    * The reference file (*.fasta) must also have a .dict and a .fasta.fai next to it.
    */
@@ -61,6 +63,16 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
     PCollection<RecalibrationTables> stats = computeBlockStatistics(readsHeader, referenceFileName, toolArgs, groupByBlock(reads, placesToIgnore));
     PCollection<RecalibrationTables> oneStat = aggregateStatistics(stats);
     return oneStat;
+  }
+
+  /**
+   * Get a single BaseRecalOutput object that represents the whole output of phase 1 of BQSR.
+   * <p>
+   * The reference file (*.fasta) must also have a .dict and a .fasta.fai next to it.
+   */
+  public static PCollection<BaseRecalOutput> getRecalibrationOutput(SAMFileHeader readsHeader, PCollection<Read> reads, String referenceFileName, BaseRecalibrationArgumentCollection toolArgs, PCollection<SimpleInterval> placesToIgnore) {
+    PCollection<RecalibrationTables> recalibrationTables = getRecalibrationTables(readsHeader, reads, referenceFileName, toolArgs, placesToIgnore);
+    return quantize(readsHeader, toolArgs, recalibrationTables);
   }
 
   /**
@@ -89,6 +101,21 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
 
   // ---------------------------------------------------------------------------------------------------
   // non-public methods
+
+  private static PCollection<BaseRecalOutput> quantize(SAMFileHeader readsHeader, BaseRecalibrationArgumentCollection toolArgs, PCollection<RecalibrationTables> recal) {
+    return recal.apply(ParDo
+            .named("quantize")
+            .of(new DoFn<RecalibrationTables, BaseRecalOutput>() {
+              @Override
+              public void processElement(ProcessContext c) {
+                RecalibrationTables rt = c.element();
+                BaseRecalibratorWorker baseRecalibratorWorker = BaseRecalibratorWorker.fromArgs(readsHeader, toolArgs);
+                baseRecalibratorWorker.onTraversalStart(null);
+                BaseRecalOutput ret = new BaseRecalOutput(rt, baseRecalibratorWorker.getQuantizationInfo(rt), baseRecalibratorWorker.getRequestedCovariates());
+                c.output(ret);
+              }
+            })).setCoder(SerializableCoder.of(BaseRecalOutput.class));
+  }
 
   private static String[] getRelatedFiles(String fastaFilename) {
     return new String[] { fastaFilename, ReferenceUtils.getFastaDictionaryFileName(fastaFilename), ReferenceUtils.getFastaIndexFileName(fastaFilename) };

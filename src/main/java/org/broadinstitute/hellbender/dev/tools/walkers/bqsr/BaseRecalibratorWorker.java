@@ -215,6 +215,14 @@ public final class BaseRecalibratorWorker {
         return this.covariates;
     }
 
+    /**
+     * @param rt recalibration tables
+     * @return the quantization information
+     */
+    public QuantizationInfo getQuantizationInfo(RecalibrationTables rt) {
+        return new QuantizationInfo(rt, BRAC.RAC.QUANTIZING_LEVELS);
+    }
+
     private ReadTransformer makeReadTransform() {
         ReadTransformer f0 = BaseRecalibratorWorker::consolidateCigar;
 
