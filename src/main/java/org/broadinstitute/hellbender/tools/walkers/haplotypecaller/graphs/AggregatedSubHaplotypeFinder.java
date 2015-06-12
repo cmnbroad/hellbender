@@ -10,7 +10,7 @@ import java.util.*;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> implements KBestSubHaplotypeFinder {
+public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> implements KBestSubHaplotypeFinder {
 
     /**
      * Collection of subFinders that provided the actual solutions.
@@ -53,8 +53,9 @@ class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> implements
     @Override
     public String id() {
         final StringBuilder resultBuilder = new StringBuilder();
-        for (final KBestSubHaplotypeFinder subFinder : subFinders)
+        for (final KBestSubHaplotypeFinder subFinder : subFinders) {
             resultBuilder.append(subFinder.id());
+        }
         return resultBuilder.toString();
     }
 
@@ -88,7 +89,9 @@ class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> implements
         if (offset + length > bases.length) throw new IllegalArgumentException("the offset and length go beyond the array size");
         for (final KBestSubHaplotypeFinder subFinder : subFinders) {
             final double score = subFinder.score(bases,offset,length);
-            if (!Double.isNaN(score)) return score;
+            if (!Double.isNaN(score)) {
+                return score;
+            }
         }
         return Double.NaN;
     }

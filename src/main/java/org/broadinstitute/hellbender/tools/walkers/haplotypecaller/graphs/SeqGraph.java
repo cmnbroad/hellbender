@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * A graph that contains base sequence at each node
  */
-public class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
+public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
     /**
      * Edge factory that creates non-reference multiplicity 1 edges
      */

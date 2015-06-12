@@ -272,13 +272,13 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
     protected KBestSubHaplotypeFinder createVertexFinder(final SeqVertex vertex) {
         KBestSubHaplotypeFinder finder = finderByVertex.get(vertex);
         if (finder == null) {
-            if (sinks.contains(vertex))
-                finder = new EmptyPathHaplotypeFinderNode(graph,vertex);
-            else {
+            if (sinks.contains(vertex)) {
+                finder = new EmptyPathHaplotypeFinderNode(graph, vertex);
+            } else {
                 final Set<BaseEdge> outgoingEdges = graph.outgoingEdgesOf(vertex);
-                if (outgoingEdges.isEmpty())
+                if (outgoingEdges.isEmpty()) {
                     finder = DeadEndKBestSubHaplotypeFinder.INSTANCE;
-                else {
+                } else {
                     final Map<BaseEdge,KBestSubHaplotypeFinder> undeadChildren = createChildrenFinders(outgoingEdges);
                     finder = undeadChildren.isEmpty() ? DeadEndKBestSubHaplotypeFinder.INSTANCE :
                             new RecursiveSubHaplotypeFinder(graph,vertex,undeadChildren);

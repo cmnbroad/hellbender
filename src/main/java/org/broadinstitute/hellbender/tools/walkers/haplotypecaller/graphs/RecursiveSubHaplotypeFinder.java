@@ -24,7 +24,7 @@ import java.util.*;
 *
 * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
 */
-class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<RecursiveSubHaplotypeFinder.EdgeSubHaplotypeFinder> {
+final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<RecursiveSubHaplotypeFinder.EdgeSubHaplotypeFinder> {
     private final SeqVertex vertex;
     private final boolean isReference;
 
@@ -115,7 +115,7 @@ class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Recursive
         return (i == edgeLabel.length() - 1) ? edgeLabel : edgeLabel.substring(0,i);
     }
 
-    protected static class EdgeSubHaplotypeFinder implements KBestSubHaplotypeFinder {
+    protected static final class EdgeSubHaplotypeFinder implements KBestSubHaplotypeFinder {
 
         private final KBestSubHaplotypeFinder childFinder;
 

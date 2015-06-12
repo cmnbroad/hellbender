@@ -11,7 +11,7 @@ import java.util.Set;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
+final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
 
     /**
      * Caches the only solution returned by this finder.
@@ -49,7 +49,7 @@ class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
     }
 
     @Override
-    public KBestHaplotype getKBest(int k) {
+    public KBestHaplotype getKBest(final int k) {
         if (k < 0)
             throw new IllegalArgumentException("k cannot be negative");
         if (k > 0)
@@ -72,13 +72,13 @@ class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
         if (length != vertexBases.length)
             return Double.NaN;
         else
-            return Utils.equalRange(bases, offset, vertexBases, 0, length)? 0 : Double.NaN;
+            return Utils.equalRange(bases, offset, vertexBases, 0, length)? 0.0 : Double.NaN;
     }
 
     /**
      * Custom extension of {@link KBestHaplotype} that implements the single solution behaviour.
      */
-    private class MyBestHaplotypePath extends KBestHaplotype {
+    private static final class MyBestHaplotypePath extends KBestHaplotype {
 
         /**
          * The solution's only vertex.

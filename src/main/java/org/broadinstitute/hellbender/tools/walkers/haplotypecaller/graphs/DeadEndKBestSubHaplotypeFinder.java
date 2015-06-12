@@ -17,12 +17,12 @@ final class DeadEndKBestSubHaplotypeFinder implements KBestSubHaplotypeFinder {
     /**
      * Sole instance of this class.
      */
-    public static DeadEndKBestSubHaplotypeFinder INSTANCE = new DeadEndKBestSubHaplotypeFinder();
+    public static final DeadEndKBestSubHaplotypeFinder INSTANCE = new DeadEndKBestSubHaplotypeFinder();
 
     /**
      * Prevents instantiation of more than one instance; please use {@link #INSTANCE}.
      */
-    protected DeadEndKBestSubHaplotypeFinder() {
+    private DeadEndKBestSubHaplotypeFinder() {
     }
 
     @Override
@@ -47,10 +47,11 @@ final class DeadEndKBestSubHaplotypeFinder implements KBestSubHaplotypeFinder {
 
     @Override
     public KBestHaplotype getKBest(int k) {
-        if (k < 0)
+        if (k < 0) {
             throw new IllegalArgumentException("k cannot be negative");
-        else
+        } else {
             throw new IllegalArgumentException("k cannot be equal or greater to the haplotype count");
+        }
     }
 
     @Override
