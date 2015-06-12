@@ -14,7 +14,7 @@ import java.util.*;
  *
  * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
  */
-public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> implements Iterable<KBestHaplotype> {
+public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> {
 
     /**
      * The search graph.
@@ -24,17 +24,17 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
     /**
      * Map of sub-haplotype finder by their source vertex.
      */
-    public Map<SeqVertex,KBestSubHaplotypeFinder> finderByVertex;
+    public final Map<SeqVertex,KBestSubHaplotypeFinder> finderByVertex;
 
     /**
      * Possible haplotype sink vertices.
      */
-    public Set<SeqVertex> sinks;
+    public final Set<SeqVertex> sinks;
 
     /**
      * Possible haplotype source vertices.
      */
-    public Set<SeqVertex> sources;
+    public final Set<SeqVertex> sources;
 
     /**
      * The top finder.
@@ -44,22 +44,6 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
      * for their best haplotypes.</p>
      */
     private final KBestSubHaplotypeFinder topFinder;
-
-    /**
-     * Constructs a new best haplotypes finder.
-     *
-     * @param graph the seq-graph to search.
-     * @param source the source vertex for all haplotypes.
-     * @param sink sink vertices for all haplotypes.
-     *
-     * @throws IllegalArgumentException if <ul>
-     *     <li>any of {@code graph}, {@code source} or {@code sink} is {@code null} or</li>
-     *     <li>either {@code source} or {@code sink} is not a vertex in {@code graph}.</li>
-     * </ul>
-     */
-    public KBestHaplotypeFinder(final SeqGraph graph, final SeqVertex source, final SeqVertex sink) {
-        this(graph, Collections.singleton(source), Collections.singleton(sink));
-    }
 
     /**
      * Constructs a new best haplotypes finder.
@@ -89,12 +73,29 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
         finderByVertex = new HashMap<>(this.graph.vertexSet().size());
         this.sinks = sinks;
         this.sources = sources;
-        if (sinks.size() == 0 || sources.size() == 0)
+        if (sinks.isEmpty() || sources.isEmpty()) {
             topFinder = DeadEndKBestSubHaplotypeFinder.INSTANCE;
-        else if (sources.size() == 1)
+        } else if (sources.size() == 1) {
             topFinder = createVertexFinder(sources.iterator().next());
-        else
+        } else {
             topFinder = createAggregatedFinder();
+        }
+    }
+
+    /**
+     * Constructs a new best haplotypes finder.
+     *
+     * @param graph the seq-graph to search.
+     * @param source the source vertex for all haplotypes.
+     * @param sink sink vertices for all haplotypes.
+     *
+     * @throws IllegalArgumentException if <ul>
+     *     <li>any of {@code graph}, {@code source} or {@code sink} is {@code null} or</li>
+     *     <li>either {@code source} or {@code sink} is not a vertex in {@code graph}.</li>
+     * </ul>
+     */
+    public KBestHaplotypeFinder(final SeqGraph graph, final SeqVertex source, final SeqVertex sink) {
+        this(graph, Collections.singleton(source), Collections.singleton(sink));
     }
 
     /**
@@ -105,8 +106,8 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
      *
      * @param graph the seq-graph to search for the best haplotypes.
      */
-    public KBestHaplotypeFinder(SeqGraph graph) {
-        this(graph,graph.getSources(),graph.getSinks());
+    public KBestHaplotypeFinder(final SeqGraph graph) {
+        this(graph, graph.getSources(), graph.getSinks());
     }
 
     /**
@@ -116,8 +117,9 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
      */
     private KBestSubHaplotypeFinder createAggregatedFinder() {
         final List<KBestSubHaplotypeFinder> sourceFinders = new ArrayList<>(sources.size());
-        for (final SeqVertex source : sources)
+        for (final SeqVertex source : sources) {
             sourceFinders.add(createVertexFinder(source));
+        }
         return new AggregatedSubHaplotypeFinder(sourceFinders);
     }
 
@@ -134,16 +136,19 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
         final Set<SeqVertex> vertexToRemove = new HashSet<>(original.vertexSet().size());
 
         boolean foundSomePath = false;
-        for (final SeqVertex source : sources)
-            foundSomePath = findGuiltyVerticesAndEdgesToRemoveCycles(original, source, sinks, edgesToRemove,
-                    vertexToRemove, new HashSet<>(original.vertexSet().size())) | foundSomePath;
+        for (final SeqVertex source : sources) {
+            final Set<SeqVertex> parentVertices = new HashSet<>(original.vertexSet().size());
+            foundSomePath = findGuiltyVerticesAndEdgesToRemoveCycles(original, source, sinks, edgesToRemove, vertexToRemove, parentVertices) | foundSomePath;
+        }
 
-        if (!foundSomePath)
+        if (!foundSomePath) {
             throw new IllegalStateException("could not find any path from the source vertex to the sink vertex after removing cycles: "
                     + Arrays.toString(sources.toArray()) + " => " + Arrays.toString(sinks.toArray()));
+        }
 
-        if (edgesToRemove.isEmpty() && vertexToRemove.isEmpty())
+        if (edgesToRemove.isEmpty() && vertexToRemove.isEmpty()) {
             throw new IllegalStateException("cannot find a way to remove the cycles");
+        }
 
         final SeqGraph result = (SeqGraph) original.clone();
         result.removeAllEdges(edgesToRemove);
@@ -171,7 +176,9 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
                                                                     final Set<BaseEdge> edgesToRemove,
                                                                     final Set<SeqVertex> verticesToRemove,
                                                                     final Set<SeqVertex> parentVertices) {
-        if (sinks.contains(currentVertex)) return true;
+        if (sinks.contains(currentVertex)) {
+            return true;
+        }
 
         final Set<BaseEdge> outgoingEdges = graph.outgoingEdgesOf(currentVertex);
         boolean reachesSink = false;
@@ -179,23 +186,25 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
 
         for (final BaseEdge edge : outgoingEdges) {
             final SeqVertex child = graph.getEdgeTarget(edge);
-            if (parentVertices.contains(child))
+            if (parentVertices.contains(child)) {
                 edgesToRemove.add(edge);
-            else {
-              final boolean childReachSink = findGuiltyVerticesAndEdgesToRemoveCycles(graph, child, sinks,
-                      edgesToRemove, verticesToRemove, parentVertices);
-              reachesSink = reachesSink || childReachSink;
+            } else {
+                final boolean childReachSink = findGuiltyVerticesAndEdgesToRemoveCycles(graph, child, sinks, edgesToRemove, verticesToRemove, parentVertices);
+                reachesSink = reachesSink || childReachSink;
             }
         }
         parentVertices.remove(currentVertex);
-        if (!reachesSink) verticesToRemove.add(currentVertex);
+        if (!reachesSink) {
+            verticesToRemove.add(currentVertex);
+        }
         return reachesSink;
     }
 
     @Override
     public KBestHaplotype get(final int index) {
-        if (index < 0 || index >= size())
+        if (index < 0 || index >= size()) {
             throw new IndexOutOfBoundsException();
+        }
         return topFinder.getKBest(index);
     }
 
@@ -269,7 +278,7 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
      *
      * @return never {@code null}, perhaps a finder that returns no haplotypes though.
      */
-    protected KBestSubHaplotypeFinder createVertexFinder(final SeqVertex vertex) {
+    public KBestSubHaplotypeFinder createVertexFinder(final SeqVertex vertex) {
         KBestSubHaplotypeFinder finder = finderByVertex.get(vertex);
         if (finder == null) {
             if (sinks.contains(vertex)) {
@@ -304,7 +313,9 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
         final Map<BaseEdge,KBestSubHaplotypeFinder> result = new LinkedHashMap<>(baseEdges.size());
         for (final BaseEdge edge : baseEdges) {
             final KBestSubHaplotypeFinder targetFinder = createVertexFinder(graph.getEdgeTarget(edge));
-            if (targetFinder.getCount() == 0) continue;
+            if (targetFinder.getCount() == 0) {
+                continue;
+            }
             result.put(edge, targetFinder);
         }
         return result;
@@ -339,13 +350,14 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
         referenceCluster.append("    }");
         out.println(referenceCluster.toString());
 
-        for (final KBestSubHaplotypeFinder finder : finderByVertex.values())
-            for (final Pair<? extends KBestSubHaplotypeFinder,String> subFinderLabel : finder.subFinderLabels()) {
+        for (final KBestSubHaplotypeFinder finder : finderByVertex.values()) {
+            for (final Pair<? extends KBestSubHaplotypeFinder, String> subFinderLabel : finder.subFinderLabels()) {
                 final KBestSubHaplotypeFinder subFinder = subFinderLabel.getLeft();
 
                 final String edgeLabel = subFinderLabel.getRight();
                 out.println(String.format("    %s -> %s [label=%s]", finder.id(), subFinder.id(), edgeLabel));
             }
+        }
         out.println("}");
     }
 
@@ -363,9 +375,10 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
             throw new IllegalArgumentException("the output file cannot be null");
         final PrintWriter out = new PrintWriter(file);
         printDOT(out);
-        if (out.checkError())
+        if (out.checkError()) {
             throw new IllegalStateException("error occurred while writing k-best haplotype search graph into file '"
                     + file.getAbsolutePath() + "'");
+        }
         out.close();
     }
 
@@ -431,12 +444,14 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> imp
         if (maxSize < 0) throw new IllegalArgumentException("maxSize cannot be negative");
         final int requiredCapacity = Math.min(maxSize, size());
         final Set<Haplotype> haplotypes = new HashSet<>(requiredCapacity);
-        int resultSize = 0;
+        final int resultSize = 0;
         final List<KBestHaplotype> result = new ArrayList<>(requiredCapacity);
         for (final KBestHaplotype kbh : this) {
             if (haplotypes.add(kbh.haplotype())) {
                 result.add(kbh);
-                if (resultSize == maxSize) break;
+                if (resultSize == maxSize) {
+                    break;
+                }
             }
         }
         return result;

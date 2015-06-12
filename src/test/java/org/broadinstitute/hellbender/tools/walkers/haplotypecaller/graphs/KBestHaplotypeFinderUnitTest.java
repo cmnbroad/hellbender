@@ -17,6 +17,75 @@ import java.util.*;
 
 public final class KBestHaplotypeFinderUnitTest extends BaseTest {
 
+    @Test
+    public void testCycleRemove(){
+        final SeqGraph g = new SeqGraph(3);
+        final SeqVertex v1 = new SeqVertex("a");
+        final SeqVertex v2 = new SeqVertex("b");
+        final SeqVertex v3 = new SeqVertex("c");
+        final SeqVertex v4 = new SeqVertex("d");
+        g.addVertex(v1);   //source
+        g.addVertex(v2);
+        g.addVertex(v3);
+        g.addVertex(v4);  //sink
+        g.addEdge(v1, v2);
+        g.addEdge(v2, v3);
+        g.addEdge(v3, v2); //cycle
+        g.addEdge(v3, v4);
+        final KBestHaplotypeFinder finder = new KBestHaplotypeFinder(g);
+        Assert.assertEquals(finder.sources.size(), 1);
+        Assert.assertEquals(finder.sinks.size(), 1);
+    }
+
+    @Test
+    public void testNoSourceOrSink(){
+        final SeqGraph g = new SeqGraph(3);
+        final SeqVertex v1 = new SeqVertex("a");
+        final SeqVertex v2 = new SeqVertex("b");
+        g.addVertex(v1);   //source
+        g.addVertex(v2);
+        g.addEdge(v1, v2);
+        final KBestHaplotypeFinder finder = new KBestHaplotypeFinder(g);
+        Assert.assertEquals(finder.sources.size(), 1);
+        Assert.assertEquals(finder.sinks.size(), 1);
+
+        final KBestHaplotypeFinder finder2 = new KBestHaplotypeFinder(g, Collections.emptySet(), Collections.singleton(v2));
+        Assert.assertEquals(finder2.sources.size(), 0);
+        Assert.assertEquals(finder2.sinks.size(), 1);
+
+        final KBestHaplotypeFinder finder3 = new KBestHaplotypeFinder(g, Collections.singleton(v1), Collections.emptySet());
+        Assert.assertEquals(finder3.sources.size(), 1);
+        Assert.assertEquals(finder3.sinks.size(), 0);
+        Assert.assertEquals(finder3.size(), 0);
+    }
+
+    @Test
+    public void testDeadNode(){
+        final SeqGraph g = new SeqGraph(3);
+        final SeqVertex v1 = new SeqVertex("a");
+        final SeqVertex v2 = new SeqVertex("b");
+        final SeqVertex v3 = new SeqVertex("c");
+        final SeqVertex v4 = new SeqVertex("d");
+        final SeqVertex v5 = new SeqVertex("e");
+        g.addVertex(v1);   //source
+        g.addVertex(v2);
+        g.addVertex(v3);
+        g.addVertex(v4);  //sink
+        g.addVertex(v5);  //sink
+        g.addEdge(v1, v2);
+        g.addEdge(v2, v3);
+        g.addEdge(v3, v2);//cycle
+        g.addEdge(v2, v5);
+        g.addEdge(v1, v4);
+        final KBestHaplotypeFinder finder1 = new KBestHaplotypeFinder(g);
+        Assert.assertEquals(finder1.sources.size(), 1);
+        Assert.assertEquals(finder1.sinks.size(), 2);
+
+        final KBestHaplotypeFinder finder2 = new KBestHaplotypeFinder(g, v1, v4); //v5 is a dead node (can't reach the sink v4)
+        Assert.assertEquals(finder2.sources.size(), 1);
+        Assert.assertEquals(finder2.sinks.size(), 1);
+    }
+
     @DataProvider(name = "BasicPathFindingData")
     public Object[][] makeBasicPathFindingData() {
         final List<Object[]> tests = new ArrayList<>();
@@ -57,7 +126,7 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
         final Set<SeqVertex> ends = createVertices(graph, nEndNodes, middleBottom, null);
 
         // enumerate all possible paths
-        final List<KBestHaplotype> paths = new KBestHaplotypeFinder(graph, starts, ends);
+        final KBestHaplotypeFinder paths = new KBestHaplotypeFinder(graph, starts, ends);
 
         final int expectedNumOfPaths = nStartNodes * nBranchesPerBubble * nEndNodes;
         Assert.assertEquals(paths.size(), expectedNumOfPaths, "Didn't find the expected number of paths");
@@ -67,6 +136,16 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
             final Path<SeqVertex,BaseEdge> path = kbh.path();
             Assert.assertTrue(kbh.score() <= lastScore, "Paths out of order.   Path " + path + " has score " + path.getScore() + " above previous " + lastScore);
             lastScore = kbh.score();
+        }
+
+
+        double lastScoreIter = 0;
+        final Iterator<KBestHaplotype> iter = paths.iterator(paths.size());
+        while ( iter.hasNext() ) {
+            final KBestHaplotype kbh = iter.next();
+            final Path<SeqVertex,BaseEdge> path = kbh.path();
+            Assert.assertTrue(kbh.score() <= lastScoreIter, "Paths out of order.   Path " + path + " has score " + path.getScore() + " above previous " + lastScore);
+            lastScoreIter = kbh.score();
         }
 
         // get the best path, and make sure it's the same as our optimal path overall
