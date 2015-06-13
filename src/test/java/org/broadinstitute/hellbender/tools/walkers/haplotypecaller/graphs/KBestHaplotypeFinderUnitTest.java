@@ -13,6 +13,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public final class KBestHaplotypeFinderUnitTest extends BaseTest {
@@ -35,6 +38,31 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
         final KBestHaplotypeFinder finder = new KBestHaplotypeFinder(g);
         Assert.assertEquals(finder.sources.size(), 1);
         Assert.assertEquals(finder.sinks.size(), 1);
+    }
+
+    @Test
+    public void testCyclePrint() throws FileNotFoundException {
+        final SeqGraph g = new SeqGraph(3);
+        final SeqVertex v1 = new SeqVertex("a");
+        final SeqVertex v2 = new SeqVertex("b");
+        final SeqVertex v3 = new SeqVertex("c");
+        final SeqVertex v4 = new SeqVertex("d");
+        g.addVertex(v1);   //source
+        g.addVertex(v2);
+        g.addVertex(v3);
+        g.addVertex(v4);  //sink
+        g.addEdge(v1, v2);
+        g.addEdge(v2, v3);
+        g.addEdge(v3, v2); //cycle
+        g.addEdge(v3, v4);
+        final KBestHaplotypeFinder finder = new KBestHaplotypeFinder(g);
+        finder.printDOT(new PrintWriter(System.out));     //check not blowing up
+        final File tmp = createTempFile("foo", ".dot");
+        finder.printDOT(tmp);
+        final String fname="fred.dot" ;
+        finder.printDOTFile(fname);
+        Assert.assertTrue(tmp.exists());
+        Assert.assertTrue(new File(fname).exists());
     }
 
     @Test
