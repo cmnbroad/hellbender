@@ -63,6 +63,7 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
         finder.printDOTFile(fname);
         Assert.assertTrue(tmp.exists());
         Assert.assertTrue(new File(fname).exists());
+        new File(fname).deleteOnExit();
     }
 
     @Test

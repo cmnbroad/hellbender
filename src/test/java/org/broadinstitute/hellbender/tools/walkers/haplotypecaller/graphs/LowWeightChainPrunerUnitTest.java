@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-public class LowWeightChainPrunerUnitTest extends BaseTest {
+public final class LowWeightChainPrunerUnitTest extends BaseTest {
     @DataProvider(name = "pruneChainsData")
     public Object[][] makePruneChainsData() {
         List<Object[]> tests = new ArrayList<>();

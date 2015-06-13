@@ -47,9 +47,10 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * Convenience constructor for testing that creates a path through vertices in graph
      */
     protected static <T extends BaseVertex, E extends BaseEdge> Path<T,E> makePath(final List<T> vertices, final BaseGraph<T, E> graph) {
-        Path<T,E> path = new Path<T,E>(vertices.get(0), graph);
-        for ( int i = 1; i < vertices.size(); i++ )
-            path = new Path<T,E>(path, graph.getEdge(path.lastVertex, vertices.get(i)));
+        Path<T,E> path = new Path<>(vertices.get(0), graph);
+        for ( int i = 1; i < vertices.size(); i++ ) {
+            path = new Path<>(path, graph.getEdge(path.lastVertex, vertices.get(i)));
+        }
         return path;
     }
 

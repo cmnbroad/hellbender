@@ -1,3 +1,5 @@
+package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
+
 import htsjdk.samtools.Cigar;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.BaseEdge;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.Path;
@@ -7,7 +9,7 @@ import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class PathUnitTest extends BaseTest {
+public final class PathUnitTest extends BaseTest {
     @Test(enabled = true)
     public void testAlignReallyLongDeletion() {
         final String ref = "ATGGTGGCTCATACCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGAACATCACCTGAGGCCAGGAGTTCAAAACCAGCCTGGCTAACATAGCAAAACCCCATCTCTAATGAAAATACAAAAATTAGCTGGGTGTGGTGGTGTCCGCCTGTAGTCCCAGCTACTCAGGAGACTAAGGCATGAGAATCACTTGAACCCAGGATGCAGAGGCTGTAGTGAGCCGAGATTGCACCACGGCTGCACTCCAGCCTGGGCAACAGAGCGAGACTCTGTCTCAAATAAAATAGCGTAACGTAACATAACATAACATAACATAACATAACATAACATAACATAACATAACATAACATAACACAACAACAAAATAAAATAACATAAATCATGTTGTTAGGAAAAAAATCAGTTATGCAGCTACATGCTATTTACAAGAGATATACCTTAAAATATAAGACACAGAGGCCGGGCGCGGTAGCTCATGCCTGTAATCCCAGCACTTTGGGAGGCTGAGGCAAGCGGATCATGAGGTCAGGAGATCGAGACCATCC";
