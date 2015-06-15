@@ -212,6 +212,7 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
         Assert.assertTrue(justOne.get(0).path().pathsAreTheSame(best), "Best path from complete enumerate " + best + " not the same as from k = 1 search " + justOne.get(0));
     }
 
+
     @DataProvider(name = "BasicBubbleDataProvider")
     public Object[][] makeBasicBubbleDataProvider() {
         final List<Object[]> tests = new ArrayList<>();
@@ -511,6 +512,18 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
         return tests.toArray(new Object[][]{});
     }
 
+
+    /**
+     * Convenience constructor for testing that creates a path through vertices in graph
+     */
+    private static <T extends BaseVertex, E extends BaseEdge> Path<T,E> makePath(final List<T> vertices, final BaseGraph<T, E> graph) {
+        Path<T,E> path = new Path<>(vertices.get(0), graph);
+        for ( int i = 1; i < vertices.size(); i++ ) {
+            path = new Path<>(path, graph.getEdge(path.getLastVertex(), vertices.get(i)));
+        }
+        return path;
+    }
+
     @Test(dataProvider = "SystematicRefAltSWTestData")
     public void testRefAltSW(final String prefix, final String end, final String refMid, final String altMid, final String midCigar) {
         // Construct the assembly graph
@@ -527,7 +540,7 @@ public final class KBestHaplotypeFinderUnitTest extends BaseTest {
         graph.addEdges(new BaseEdge(false, 1), top, alt, bot);
 
         // Construct the test path
-        Path<SeqVertex,BaseEdge> path = Path.makePath(Arrays.asList(top, alt, bot), graph);
+        Path<SeqVertex,BaseEdge> path = makePath(Arrays.asList(top, alt, bot), graph);
 
         Cigar expected = new Cigar();
         expected.add(new CigarElement(padSize, CigarOperator.M));
