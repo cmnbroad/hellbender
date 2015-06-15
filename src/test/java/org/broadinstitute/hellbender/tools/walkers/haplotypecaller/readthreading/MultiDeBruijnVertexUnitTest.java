@@ -20,7 +20,6 @@ public final class MultiDeBruijnVertexUnitTest {
        Assert.assertTrue(Arrays.equals(v1.getAdditionalSequence(true), "fred".getBytes()));
        Assert.assertTrue(Arrays.equals(v1.getAdditionalSequence(false), "d".getBytes()));
 
-       Assert.assertNotEquals(v1.getId(), v2.getId());
        Assert.assertNotEquals(v1.hashCode(), v2.hashCode());
        Assert.assertEquals(v1.getKmerSize(), v2.getKmerSize());
        Assert.assertEquals(v1.additionalInfo(), v2.additionalInfo());

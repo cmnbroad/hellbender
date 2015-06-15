@@ -85,10 +85,6 @@ public final class MultiDeBruijnVertex extends BaseVertex {
         return super.additionalInfo() + (KEEP_TRACK_OF_READS ? (! reads.contains("ref") ? "__" + Utils.join(",", reads) : "") : "");
     }
 
-    public int getId() {
-        return hashCode();
-    }
-
     /**
      * Get the kmer size for this DeBruijnVertex
      * @return integer >= 1
