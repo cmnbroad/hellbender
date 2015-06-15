@@ -6,6 +6,7 @@ import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.TextCigarCodec;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
@@ -19,6 +20,32 @@ import java.io.PrintWriter;
 import java.util.*;
 
 public final class KBestHaplotypeFinderUnitTest extends BaseTest {
+
+    @Test
+    public void testScore(){
+        final SeqGraph g = new SeqGraph(3);
+        final SeqVertex v1 = new SeqVertex("A");
+        final SeqVertex v2 = new SeqVertex("C");
+        final SeqVertex v3 = new SeqVertex("G");
+        final SeqVertex v4 = new SeqVertex("T");
+        final SeqVertex v5 = new SeqVertex("A");
+        g.addVertex(v1);   //source
+        g.addVertex(v2);
+        g.addVertex(v3);
+        g.addVertex(v4);
+        g.addVertex(v5);
+        g.addEdge(v1, v2);
+        g.addEdge(v2, v3);
+        g.addEdge(v2, v4);
+        g.addEdge(v2, v5);
+        final KBestHaplotypeFinder finder = new KBestHaplotypeFinder(g);
+        Assert.assertEquals(finder.sources.size(), 1);
+        Assert.assertEquals(finder.sinks.size(), 3);
+        final double score = finder.score("ACG".getBytes());
+        Assert.assertEquals(score, -0.47712125471966244);
+        final double scoreH = finder.score(new Haplotype("ACG".getBytes()));
+        Assert.assertEquals(scoreH, -0.47712125471966244);
+    }
 
     @Test
     public void testCycleRemove(){
