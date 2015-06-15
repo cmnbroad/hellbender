@@ -5,13 +5,10 @@ import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A DeBruijnVertex that supports multiple copies of the same kmer
- *
- * This is implemented through the same mechanism as SeqVertex, where each
- * created MultiDeBruijnVertex has a unique id assigned upon creation.  Two
- * MultiDeBruijnVertex are equal iff they have the same ID
  */
 public final class MultiDeBruijnVertex extends BaseVertex {
     private final static byte[][] sufficesAsByteArray = new byte[256][];
@@ -23,32 +20,49 @@ public final class MultiDeBruijnVertex extends BaseVertex {
 
     private static final boolean KEEP_TRACK_OF_READS = false;
 
-    private static int idCounter = 0; //global counter
-    private final int id = idCounter++;
-
     private final List<String> reads = new LinkedList<>();
+    private final boolean mergeIdenticalNodes;
+
+    /**
+     * Create a new MultiDeBruijnVertex with kmer sequence
+     * @param mergeIdenticalNodes should nodes with the same sequence be treated as equal?
+     * @param sequence the kmer sequence
+     */
+    public MultiDeBruijnVertex(final byte[] sequence, final boolean mergeIdenticalNodes) {
+        super(sequence);
+        this.mergeIdenticalNodes = mergeIdenticalNodes;
+    }
 
     /**
      * Create a new MultiDeBruijnVertex with kmer sequence
      * @param sequence the kmer sequence
      */
     public MultiDeBruijnVertex(final byte[] sequence) {
-        super(sequence);
+        this(sequence, false);
     }
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        MultiDeBruijnVertex that = (MultiDeBruijnVertex) o;
-
-        return id == that.id;
+        if (mergeIdenticalNodes) {
+            return super.equals(o);
+        } else {
+            return o == this;
+        }
     }
 
     @Override
+    public int hashCode() {
+        if (mergeIdenticalNodes) {
+            return super.hashCode();
+        } else {
+            return System.identityHashCode(this);
+        }
+    }
+
+
+    @Override
     public String toString() {
-        return "MultiDeBruijnVertex_id_" + id + "_seq_" + getSequenceString();
+        return "MultiDeBruijnVertex_id_" + hashCode() + "_seq_" + getSequenceString();
     }
 
     /**
@@ -67,15 +81,12 @@ public final class MultiDeBruijnVertex extends BaseVertex {
     }
 
     @Override
-    public int hashCode() { return id; }
-
-    @Override
     public String additionalInfo() {
         return super.additionalInfo() + (KEEP_TRACK_OF_READS ? (! reads.contains("ref") ? "__" + Utils.join(",", reads) : "") : "");
     }
 
     public int getId() {
-        return id;
+        return hashCode();
     }
 
     /**

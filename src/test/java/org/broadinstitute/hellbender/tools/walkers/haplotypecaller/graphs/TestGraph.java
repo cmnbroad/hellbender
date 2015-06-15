@@ -51,8 +51,8 @@ public class TestGraph extends BaseGraph<MultiDeBruijnVertex, BaseEdge> {
         if( kmer2 == null ) { throw new IllegalArgumentException("Attempting to add a null kmer to the graph."); }
         if( kmer1.length != kmer2.length ) { throw new IllegalArgumentException("Attempting to add a kmers to the graph with different lengths."); }
 
-        final MultiDeBruijnVertex v1 = new MultiDeBruijnVertex( kmer1 );
-        final MultiDeBruijnVertex v2 = new MultiDeBruijnVertex( kmer2 );
+        final MultiDeBruijnVertex v1 = new MultiDeBruijnVertex( kmer1 , true);
+        final MultiDeBruijnVertex v2 = new MultiDeBruijnVertex( kmer2 , true);
         final BaseEdge toAdd = new BaseEdge(isRef, multiplicity);
 
         addVertices(v1, v2);

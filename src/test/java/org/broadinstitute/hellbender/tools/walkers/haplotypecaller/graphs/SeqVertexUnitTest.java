@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SeqVertexUnitTest extends BaseTest {
+public final class SeqVertexUnitTest extends BaseTest {
     @Test
     public void testBasic() {
         final byte[] bases = "ACT".getBytes();
