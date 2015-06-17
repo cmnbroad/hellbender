@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
@@ -98,14 +100,7 @@ public class BaseEdge {
      * Sorts a collection of BaseEdges in decreasing order of weight, so that the most
      * heavily weighted is at the start of the list
      */
-    public static final class EdgeWeightComparator implements Comparator<BaseEdge>, Serializable {
-        private static final long serialVersionUID = 1l;
-
-        @Override
-        public int compare(final BaseEdge edge1, final BaseEdge edge2) {
-            return Integer.compare(edge2.multiplicity, edge1.multiplicity);
-        }
-    }
+    public static final Comparator<BaseEdge> EDGE_MULTIPLICITY_ORDER = Comparator.comparingInt(BaseEdge::getMultiplicity).reversed();
 
     /**
      * Add edge to this edge, updating isRef and multiplicity as appropriate
@@ -117,7 +112,7 @@ public class BaseEdge {
      * @return this
      */
     public BaseEdge add(final BaseEdge edge) {
-        if ( edge == null ) throw new IllegalArgumentException("edge cannot be null");
+        Utils.nonNull(edge, "edge cannot be null");
         this.multiplicity += edge.getMultiplicity();
         this.isRef = this.isRef || edge.isRef();
         return this;
@@ -131,12 +126,9 @@ public class BaseEdge {
      * @return a newly allocated BaseEdge
      */
     public static BaseEdge orRef(final Collection<BaseEdge> edges, final int multiplicity) {
-        for ( final BaseEdge e : edges ) {
-            if (e.isRef()) {
-                return new BaseEdge(true, multiplicity);
-            }
-        }
-        return new BaseEdge(false, multiplicity);
+        Utils.nonNull(edges);
+        final boolean anyRef = edges.stream().anyMatch(e -> e.isRef());
+        return new BaseEdge(anyRef, multiplicity);
     }
 
     /**
@@ -148,8 +140,8 @@ public class BaseEdge {
      * @param edge the edge to max
      */
     public BaseEdge max(final BaseEdge edge) {
-        if ( edge == null ) throw new IllegalArgumentException("edge cannot be null");
-        return new BaseEdge(isRef() || edge.isRef(), Math.max(getMultiplicity(), edge.getMultiplicity()));
+        Utils.nonNull(edge);
+        return new BaseEdge(this.isRef() || edge.isRef(), Math.max(this.getMultiplicity(), edge.getMultiplicity()));
     }
 
     @Override

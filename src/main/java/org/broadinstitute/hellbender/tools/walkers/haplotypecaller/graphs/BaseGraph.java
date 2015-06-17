@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.jgrapht.EdgeFactory;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -12,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extends DefaultDirectedGraph<V, E> {
     protected final static Logger logger = LogManager.getLogger(BaseGraph.class);
@@ -40,10 +42,10 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  true if this vertex is a reference node (meaning that it appears on the reference path in the graph)
      */
     public boolean isReferenceNode( final V v ) {
-        if( v == null ) { throw new IllegalArgumentException("Attempting to test a null vertex."); }
+        Utils.nonNull(v, "Attempting to test a null vertex.");
 
-        for ( final BaseEdge e : edgesOf(v) ) {
-            if ( e.isRef() ) { return true; }
+        if (edgesOf(v).stream().anyMatch(e -> e.isRef())){
+            return true;
         }
 
         // edge case: if the graph only has one node then it's a ref node, otherwise it's not
@@ -55,7 +57,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  true if this vertex is a source node (in degree == 0)
      */
     public boolean isSource( final V v ) {
-        if( v == null ) { throw new IllegalArgumentException("Attempting to test a null vertex."); }
+        Utils.nonNull(v, "Attempting to test a null vertex.");
         return inDegreeOf(v) == 0;
     }
 
@@ -64,7 +66,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  true if this vertex is a sink node (out degree == 0)
      */
     public boolean isSink( final V v ) {
-        if( v == null ) { throw new IllegalArgumentException("Attempting to test a null vertex."); }
+        Utils.nonNull(v, "Attempting to test a null vertex.");
         return outDegreeOf(v) == 0;
     }
 
@@ -73,11 +75,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a non-null set
      */
     public Set<V> getSources() {
-        final Set<V> set = new LinkedHashSet<>();
-        for ( final V v : vertexSet() )
-            if ( isSource(v) )
-                set.add(v);
-        return set;
+        return vertexSet().stream().filter(v -> isSource(v)).collect(Collectors.toSet());
     }
 
     /**
@@ -85,11 +83,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a non-null set
      */
     public Set<V> getSinks() {
-        final Set<V> set = new LinkedHashSet<>();
-        for ( final V v : vertexSet() )
-            if ( isSink(v) )
-                set.add(v);
-        return set;
+        return vertexSet().stream().filter(v -> isSink(v)).collect(Collectors.toSet());
     }
 
     /**
@@ -131,7 +125,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  non-null byte array
      */
     public byte[] getAdditionalSequence( final V v ) {
-        if( v == null ) { throw new IllegalArgumentException("Attempting to pull sequence from a null vertex."); }
+        Utils.nonNull(v, "Attempting to pull sequence from a null vertex.");
         return v.getAdditionalSequence(isSource(v));
     }
 
@@ -140,16 +134,16 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  true if this vertex is a reference source
      */
     public boolean isRefSource( final V v ) {
-        if( v == null ) { throw new IllegalArgumentException("Attempting to test a null vertex."); }
+        Utils.nonNull(v, "Attempting to pull sequence from a null vertex.");
 
         // confirm that no incoming edges are reference edges
-        for ( final E edgeToTest : incomingEdgesOf(v) ) {
-            if ( edgeToTest.isRef() ) { return false; }
+        if (incomingEdgesOf(v).stream().anyMatch(e -> e.isRef())) {
+            return false;
         }
 
         // confirm that there is an outgoing reference edge
-        for ( final E edgeToTest : outgoingEdgesOf(v) ) {
-            if ( edgeToTest.isRef() ) { return true; }
+        if (outgoingEdgesOf(v).stream().anyMatch(e -> e.isRef())) {
+            return true;
         }
 
         // edge case: if the graph only has one node then it's a ref sink, otherwise it's not
@@ -161,44 +155,34 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  true if this vertex is a reference sink
      */
     public boolean isRefSink( final V v ) {
-        if( v == null ) { throw new IllegalArgumentException("Attempting to test a null vertex."); }
+        Utils.nonNull(v, "Attempting to pull sequence from a null vertex.");
 
         // confirm that no outgoing edges are reference edges
-        for ( final E edgeToTest : outgoingEdgesOf(v) ) {
-            if ( edgeToTest.isRef() ) { return false; }
+        if (outgoingEdgesOf(v).stream().anyMatch(e -> e.isRef())) {
+            return false;
         }
 
         // confirm that there is an incoming reference edge
-        for ( final E edgeToTest : incomingEdgesOf(v) ) {
-            if ( edgeToTest.isRef() ) { return true; }
+        if (incomingEdgesOf(v).stream().anyMatch(e -> e.isRef())) {
+            return true;
         }
 
         // edge case: if the graph only has one node then it's a ref source, otherwise it's not
-        return (vertexSet().size() == 1);
+        return vertexSet().size() == 1;
     }
 
     /**
      * @return the reference source vertex pulled from the graph, can be null if it doesn't exist in the graph
      */
     public V getReferenceSourceVertex( ) {
-        for( final V v : vertexSet() ) {
-            if( isRefSource(v) ) {
-                return v;
-            }
-        }
-        return null;
+        return vertexSet().stream().filter(v -> isRefSource(v)).findFirst().orElse(null);
     }
 
     /**
      * @return the reference sink vertex pulled from the graph, can be null if it doesn't exist in the graph
      */
     public V getReferenceSinkVertex( ) {
-        for( final V v : vertexSet() ) {
-            if( isRefSink(v) ) {
-                return v;
-            }
-        }
-        return null;
+        return vertexSet().stream().filter(v -> isRefSink(v)).findFirst().orElse(null);
     }
 
     /**
@@ -256,30 +240,6 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
     }
 
     /**
-     * Does a reference path exist between the two vertices?
-     * @param fromVertex    from this vertex, can be null
-     * @param toVertex      to this vertex, can be null
-     * @return              true if a reference path exists in the graph between the two vertices
-     */
-    public boolean referencePathExists(final V fromVertex, final V toVertex) {
-        V v = fromVertex;
-        if( v == null ) {
-            return false;
-        }
-        v = getNextReferenceVertex(v);
-        if( v == null ) {
-            return false;
-        }
-        while( !v.equals(toVertex) ) {
-            v = getNextReferenceVertex(v);
-            if( v == null ) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Walk along the reference path in the graph and pull out the corresponding bases
      * @param fromVertex    starting vertex
      * @param toVertex      ending vertex
@@ -312,8 +272,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param vertices one or more vertices to add
      */
     public void addVertices(final V... vertices) {
-        for ( final V v : vertices )
+        for ( final V v : vertices ) {
             addVertex(v);
+        }
     }
 
     /**
@@ -321,8 +282,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param vertices one or more vertices to add
      */
     public void addVertices(final Collection<V> vertices) {
-        for ( final V v : vertices )
+        for ( final V v : vertices ) {
             addVertex(v);
+        }
     }
 
     /**
@@ -421,8 +383,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
             graphWriter.println("\t" + v.toString() + " [label=\"" + new String(getAdditionalSequence(v)) + v.additionalInfo() + "\",shape=box]");
         }
 
-        if ( writeHeader )
+        if ( writeHeader ) {
             graphWriter.println("}");
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,6 +40,9 @@ public final class KMerCounterCaseFixUnitTest extends BaseTest {
         assertCounts(counter, 3, "ATG", "ACC");
         assertCounts(counter, 2, "ATG", "ACC", "AAA");
         assertCounts(counter, 1, "ATG", "ACC", "AAA", "CTG", "NNA", "CCC");
+
+        counter.clear();
+        assertCounts(counter, 0);
     }
 
     private void assertCounts(final KMerCounter counter, final int minCount, final String... expecteds) {

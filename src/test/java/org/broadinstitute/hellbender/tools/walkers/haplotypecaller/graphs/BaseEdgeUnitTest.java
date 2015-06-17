@@ -107,7 +107,7 @@ public final class BaseEdgeUnitTest extends BaseTest {
         final BaseEdge e1 = new BaseEdge(false, 1);
 
         final List<BaseEdge> edges = new ArrayList<>(Arrays.asList(e1, e2, e5, e10));
-        Collections.sort(edges, new BaseEdge.EdgeWeightComparator());
+        Collections.sort(edges, BaseEdge.EDGE_MULTIPLICITY_ORDER);
         Assert.assertEquals(edges.get(0), e10);
         Assert.assertEquals(edges.get(1), e5);
         Assert.assertEquals(edges.get(2), e2);

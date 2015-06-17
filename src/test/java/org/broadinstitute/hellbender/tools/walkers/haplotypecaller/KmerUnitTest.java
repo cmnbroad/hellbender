@@ -12,7 +12,7 @@ import java.util.List;
 public final class KmerUnitTest extends BaseTest {
     @DataProvider(name = "KMerCreationData")
     public Object[][] makeKMerCreationData() {
-        List<Object[]> tests = new ArrayList<Object[]>();
+        List<Object[]> tests = new ArrayList<>();
 
         final String bases = "ACGTAACCGGTTAAACCCGGGTTT";
         for ( int start = 0; start < bases.length(); start++ ) {
@@ -31,11 +31,6 @@ public final class KmerUnitTest extends BaseTest {
     }
 
     @Test(dataProvider = "KMerCreationData")
-    public void testCopyConstructor(final byte[] allBases, final int start, final int length, final String expected) {
-        testKmerCreation(new Kmer(new Kmer(allBases, start, length)), start, length, expected);
-    }
-
-    @Test(dataProvider = "KMerCreationData")
     public void testByteConstructor(final byte[] allBases, final int start, final int length, final String expected) {
         testKmerCreation(new Kmer(Arrays.copyOfRange(allBases, start, start + length)), 0, length, expected);
     }
@@ -46,12 +41,12 @@ public final class KmerUnitTest extends BaseTest {
     }
 
     private void testKmerCreation(final Kmer kmer, final int start, final int length, final String expected) {
-        Assert.assertEquals(kmer.start, start);
+        Assert.assertEquals(kmer.start(), start);
         Assert.assertEquals(kmer.length(), length);
         Assert.assertEquals(new String(kmer.bases()), expected);
 
         // check that the caching is working by calling again
-        Assert.assertEquals(kmer.start, 0);
+        Assert.assertEquals(kmer.start(), 0);
         Assert.assertEquals(kmer.length(), length);
         Assert.assertEquals(new String(kmer.bases()), expected);
     }
@@ -61,13 +56,12 @@ public final class KmerUnitTest extends BaseTest {
         final byte[] bases = "ACGTACGT".getBytes();
         final Kmer eq1 = new Kmer(bases, 0, 3);
         final Kmer eq2 = new Kmer(bases, 4, 3);
-        final Kmer eq3 = new Kmer(new Kmer(bases, 4, 3));
         final Kmer eq4 = new Kmer(new Kmer(bases, 4, 3).bases());
         final Kmer neq = new Kmer(bases, 1, 3);
 
 //        for ( final Kmer eq : Arrays.asList(eq1, eq2) ) { // TODO -- deal with me
-        for ( final Kmer eq : Arrays.asList(eq1, eq2, eq3, eq4) ) {
-            Assert.assertEquals(eq1, eq, "Should have been equal but wasn't: " + eq1.hash + " vs " + eq.hash); // , "should be equals " + eq1 + " with " + eq);
+        for ( final Kmer eq : Arrays.asList(eq1, eq2, eq4) ) {
+            Assert.assertEquals(eq1, eq, "Should have been equal but wasn't: " + eq1.hashCode() + " vs " + eq.hashCode()); // , "should be equals " + eq1 + " with " + eq);
             Assert.assertEquals(eq1.hashCode(), eq.hashCode());
             Assert.assertNotEquals(eq, neq, "incorrectly equals " + eq + " with " + neq);
         }

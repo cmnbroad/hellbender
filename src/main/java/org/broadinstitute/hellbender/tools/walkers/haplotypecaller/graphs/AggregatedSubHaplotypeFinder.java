@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.*;
 
@@ -46,7 +47,7 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
      * @param finders set of sub-finders.
      */
     public AggregatedSubHaplotypeFinder(final Collection<F> finders) {
-        if (finders == null) throw new IllegalArgumentException("finder collection cannot be null");
+        Utils.nonNull("finder collection cannot be null");
         this.subFinders = finders;
     }
 
@@ -83,7 +84,7 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
 
     @Override
     public double score(final byte[] bases, final int offset, final int length) {
-        if (bases == null) throw new IllegalArgumentException("bases cannot be null");
+        Utils.nonNull(bases, "bases cannot be null");
         if (offset < 0) throw new IllegalArgumentException("the offset cannot be negative");
         if (length < 0) throw new IllegalArgumentException("the length cannot be negative");
         if (offset + length > bases.length) throw new IllegalArgumentException("the offset and length go beyond the array size");
@@ -97,15 +98,18 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
     }
 
     private void processSubFindersIfNeeded() {
-        if (processedSubFinders) return;
+        if (processedSubFinders) {
+            return;
+        }
 
         long count = 0;
         nextBestSubHaplotypes = new PriorityQueue<>(subFinders.size());
         for (final KBestSubHaplotypeFinder finder : subFinders) {
             final int finderCount = finder.getCount();
-            if (finderCount == 0) continue;
-            count += finderCount;
-            nextBestSubHaplotypes.add(new MyKBestHaplotypeResult(finder,0));
+            if (finderCount != 0) {
+                count += finderCount;
+                nextBestSubHaplotypes.add(new MyKBestHaplotypeResult(finder,0));
+            }
         }
 
         this.count = (int) Math.min(Integer.MAX_VALUE, count);
@@ -115,26 +119,29 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
     }
 
     @Override
-    public KBestHaplotype getKBest(int k) {
+    public KBestHaplotype getKBest(final int k) {
         if (k < 0) throw new IllegalArgumentException("k cannot be negative");
         processSubFindersIfNeeded();
         if (k >= count) throw new IllegalArgumentException("k cannot be equal or greater than the count");
-        if (k < rankedSubHaplotype.size())
+        if (k < rankedSubHaplotype.size()) {
             return rankedSubHaplotype.get(k);
+        }
 
         rankedSubHaplotype.ensureCapacity(k+1);
         for (int i = rankedSubHaplotype.size(); i <= k; i++) {
             // since k < possibleHaplotypeCount is guarantee no to be empty.
-            if (nextBestSubHaplotypes.isEmpty())
-                throw new IllegalStateException("what the heck " + k + " " + count);
+            if (nextBestSubHaplotypes.isEmpty()) {
+                throw new IllegalStateException("what the heck " + k + ' ' + count);
+            }
             final MyKBestHaplotypeResult nextResult = nextBestSubHaplotypes.remove();
             nextResult.rank = i;
             rankedSubHaplotype.add(nextResult);
             final int subRank = nextResult.result.rank();
 
             // if there is no further solution from the same child we cannot add another solution from that child.
-            if (subRank + 1 >= nextResult.subFinder.getCount())
+            if (subRank + 1 >= nextResult.subFinder.getCount()) {
                 continue;
+            }
             nextBestSubHaplotypes.add(new MyKBestHaplotypeResult(nextResult.subFinder, subRank + 1));
         }
         return rankedSubHaplotype.get(k);

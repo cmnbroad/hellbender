@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 *
 * @author Valentin Ruano-Rubio &lt;valentin@broadinstitute.org&gt;
 */
-public class AssemblyRegionTestDataSet {
+public final class AssemblyRegionTestDataSet {
 
     private final byte[] referenceBytes;
     protected String reference;

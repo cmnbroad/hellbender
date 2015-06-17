@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class CivarUnitTest extends BaseTest {
+public final class CivarUnitTest extends BaseTest {
 
 
     @Test(dataProvider="validCivarExamples")

@@ -12,8 +12,7 @@ import java.util.*;
  * Allows to specify variation of a sequence.
  * <p/>
  */
-public class Civar {
-
+public final class Civar {
 
     protected List<Element> elements;
     private String string;

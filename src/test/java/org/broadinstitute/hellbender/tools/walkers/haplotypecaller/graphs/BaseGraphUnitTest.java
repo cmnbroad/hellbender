@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.*;
 
-public class BaseGraphUnitTest extends BaseTest {
+public final class BaseGraphUnitTest extends BaseTest {
     SeqGraph graph;
     SeqVertex v1, v2, v3, v4, v5;
 
@@ -28,6 +28,12 @@ public class BaseGraphUnitTest extends BaseTest {
         graph.addEdge(v3, v2);
         graph.addEdge(v2, v3);
         graph.addEdge(v4, v5);
+    }
+
+    @Test
+    public void sourcesAndSinks(){
+        Assert.assertEquals(graph.getSources(), Collections.singleton(v1));
+        Assert.assertEquals(graph.getSinks(), Collections.singleton(v5));
     }
 
     @Test

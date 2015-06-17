@@ -4,7 +4,7 @@ import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class SequenceForKmersUnitTest extends BaseTest {
+public final class SequenceForKmersUnitTest extends BaseTest {
     @Test
     public void testNoCount() {
         final byte[] seq = "ACGT".getBytes();

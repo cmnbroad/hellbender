@@ -1,5 +1,8 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.util.Arrays;
 
 /**
@@ -12,14 +15,14 @@ import java.util.Arrays;
  * -- can get actual byte[] of the kmer, even if it's from a larger byte[], and this operation
  *    only does the work of that operation once, updating its internal state
  */
-public class Kmer {
+public final class Kmer {
     // this values may be updated in the course of interacting with this kmer
-    byte[] bases;
-    int start;
+    private byte[] bases;
+    private int start;
 
     // two constants
-    final int length;
-    final int hash;
+    private final int length;
+    private final int hash;
 
     /**
      * Create a new kmer using all bases in kmer
@@ -58,28 +61,7 @@ public class Kmer {
         this.bases = bases;
         this.start = start;
         this.length = length;
-        this.hash = myHashCode(bases, start, length);
-    }
-
-    /**
-     * Create a new kmer that's a shallow copy of kmer
-     * @param kmer the kmer to shallow copy
-     */
-    public Kmer(final Kmer kmer) {
-        this.bases = kmer.bases;
-        this.start = kmer.start;
-        this.length = kmer.length;
-        this.hash = kmer.hash;
-    }
-
-    public Kmer(final Kmer kmer, final byte nextChar) {
-        final byte[] sequence = new byte[kmer.length];
-        System.arraycopy(kmer.bases, kmer.start + 1, sequence, 0, kmer.length - 1);
-        sequence[kmer.length - 1] = nextChar;
-        bases = sequence;
-        start = 0;
-        length = kmer.length;
-        hash = myHashCode(bases,start,length);
+        this.hash = new String(bases, start, length).hashCode();
     }
 
     /**
@@ -107,14 +89,6 @@ public class Kmer {
         }
 
         return bases;
-    }
-
-    /**
-     * Get a string representation of the bases of this kmer
-     * @return a non-null string
-     */
-    public String baseString() {
-        return new String(bases());
     }
 
     /**
@@ -172,7 +146,7 @@ public class Kmer {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (o == null || !Kmer.class.isAssignableFrom(o.getClass())) return false;
+        if (!(o instanceof Kmer)) return false;
 
         final Kmer kmer = (Kmer) o;
 
@@ -180,13 +154,7 @@ public class Kmer {
         if ( hash != kmer.hash ) return false;
         if ( length != kmer.length ) return false;
 
-        for ( int i = 0; i < length; i++ ) {
-            if (bases[start + i] != kmer.bases[kmer.start + i]) {
-                return false;
-            }
-        }
-
-        return true;
+        return Utils.equalRange(bases, start, kmer.bases, kmer.start, length);
     }
 
     @Override
@@ -194,30 +162,8 @@ public class Kmer {
         return hash;
     }
 
-    /**
-     * Helper method that computes the hashcode for this kmer based only the bases in
-     * a[], starting at start and running length bases
-     *
-     * @param a a non-null bases array
-     * @param start where to start in bases
-     * @param length the length of the bases
-     * @return a hashcode value appropriate for a[start] -> a[start + length]
-     */
-    private static int myHashCode(final byte a[], final int start, final int length) {
-        if (a == null) {
-            return 0;
-        }
-
-        int result = 1;
-        for (int i = 0; i < length; i++) {
-            result = 31 * result + a[start + i];
-        }
-
-        return result;
+    @VisibleForTesting
+    int start() {
+        return start;
     }
-
-    public byte base(final int i) {
-        return bases[start + i];
-    }
-
 }

@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-public class LocalAssemblyEngineUnitTest extends BaseTest {
+public final class LocalAssemblyEngineUnitTest extends BaseTest {
     private GenomeLocParser genomeLocParser;
     private IndexedFastaSequenceFile seq;
     private SAMFileHeader header;
@@ -38,9 +38,9 @@ public class LocalAssemblyEngineUnitTest extends BaseTest {
     public Object[][] makeAssembleIntervalsData() {
         List<Object[]> tests = new ArrayList<>();
 
-        final String contig = "20";
-        final int start = 10000000;
-        final int end   = 10100000;
+        final String contig = "1";
+        final int start = 100000;
+        final int end   = 200001;
         final int windowSize = 100;
         final int stepSize = 200;
         final int nReadsToUse = 5;
@@ -58,9 +58,9 @@ public class LocalAssemblyEngineUnitTest extends BaseTest {
     public Object[][] makeAssembleIntervalsWithVariantData() {
         List<Object[]> tests = new ArrayList<>();
 
-        final String contig = "20";
-        final int start = 10000000;
-        final int end   = 10001000;
+        final String contig = "1";
+        final int start = 100000;
+        final int end   = 101001;
         final int windowSize = 100;
         final int stepSize = 200;
         final int variantStepSize = 1;
@@ -168,8 +168,8 @@ public class LocalAssemblyEngineUnitTest extends BaseTest {
     public Object[][] makeSimpleAssemblyTestData() {
         List<Object[]> tests = new ArrayList<>();
 
-        final String contig  = "20";
-        final int start      = 10000000;
+        final String contig  = "1";
+        final int start      = 100000;
         final int windowSize = 200;
         final int end        = start + windowSize;
 

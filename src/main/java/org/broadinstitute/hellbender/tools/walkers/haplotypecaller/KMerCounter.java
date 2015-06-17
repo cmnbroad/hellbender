@@ -1,5 +1,8 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.util.*;
 
 /**
@@ -32,7 +35,7 @@ public final class KMerCounter {
      * @return a positive integer
      */
     public int getKmerCount(final Kmer kmer) {
-        if ( kmer == null ) throw new IllegalArgumentException("kmer cannot be null");
+        Utils.nonNull("kmer cannot be null");
         final CountedKmer counted = countsByKMer.get(kmer);
         return counted == null ? 0 : counted.count;
     }
@@ -92,7 +95,7 @@ public final class KMerCounter {
         return b.toString();
     }
 
-    protected static class CountedKmer implements Comparable<CountedKmer> {
+    protected static final class CountedKmer implements Comparable<CountedKmer> {
         final Kmer kmer;
         int count = 0;
 
@@ -117,8 +120,8 @@ public final class KMerCounter {
         }
 
         @Override
-        public int compareTo(CountedKmer o) {
-            return o.count - count;
+        public int compareTo(final CountedKmer o) {
+            return Integer.compare(o.count, count);
         }
     }
 
@@ -126,19 +129,13 @@ public final class KMerCounter {
     // Protected methods for testing purposes only
     // -------------------------------------------------------------------------------------
 
-    /**
-     * For testing purposes only
-     */
-    protected void addKmer(final String rawKmer, final int kmerCount) {
+    @VisibleForTesting
+    void addKmer(final String rawKmer, final int kmerCount) {
         addKmer(new Kmer(rawKmer), kmerCount);
     }
 
-    /**
-     * For testing purposes
-     *
-     * @param kmers
-     */
-    protected void addKmers(final String... kmers) {
+    @VisibleForTesting
+    void addKmers(final String... kmers) {
         for ( final String kmer : kmers )
             addKmer(kmer, 1);
     }
