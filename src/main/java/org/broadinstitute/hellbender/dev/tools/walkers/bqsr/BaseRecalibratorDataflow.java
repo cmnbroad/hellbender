@@ -63,6 +63,7 @@ import java.util.List;
         programGroup = ReadProgramGroup.class
 )
 public class BaseRecalibratorDataflow extends DataflowCommandLineProgram {
+    private static final long serialVersionUID = 1L;
 
     private final static Logger logger = LogManager.getLogger(BaseRecalibratorDataflow.class);
     // temporary file with the serialized recalibrationTables.
@@ -213,6 +214,7 @@ public class BaseRecalibratorDataflow extends DataflowCommandLineProgram {
     }
 
     /** list of known intervals -> PCollection */
+    @SuppressWarnings("unchecked")
     private static PCollection<SimpleInterval> ingestKnownIntervals(final Pipeline pipeline, List<FeatureInput<Feature>> knownSites) {
         // known sites
         List<SimpleInterval> knownSitesLst = new ArrayList<>();

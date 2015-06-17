@@ -124,6 +124,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
         .named("shard reads")
         .of(
             new DoFn<Read, KV<String, Read>>() {
+                private static final long serialVersionUID = 1L;
               @Override
               public void processElement(ProcessContext c) {
                 Read r = c.element();
@@ -139,6 +140,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
         .named("shard known intervals")
         .of(
             new DoFn<SimpleInterval, KV<String, SimpleInterval>>() {
+              private static final long serialVersionUID = 1L;
               @Override
               public void processElement(ProcessContext c) {
                 SimpleInterval i = c.element();
@@ -169,13 +171,14 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
     PCollection<RecalibrationTables> ret = readsAndIgnores.apply(ParDo
             .named("computeBlockStatistics")
             .of(new DoFn<KV<String, CoGbkResult>, RecalibrationTables>() {
+                private static final long serialVersionUID = 1L;
               CalibrationTablesBuilder ct;
               Stopwatch timer;
               int nBlocks = 0;
               int nReads = 0;
 
               @Override
-              public void startBundle(DoFn.Context c) throws Exception {
+              public void startBundle(DoFn<KV<String, CoGbkResult>, RecalibrationTables>.Context c) throws Exception {
                 timer = Stopwatch.createStarted();
                 SAMFileHeader header = readsHeader;
 
@@ -238,7 +241,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
               }
 
               @Override
-              public void finishBundle(DoFn.Context c) throws Exception {
+              public void finishBundle(DoFn<KV<String, CoGbkResult>, RecalibrationTables>.Context c) throws Exception {
                 ct.done();
                 c.output(ct.getRecalibrationTables());
                 logger.info("Finishing a block statistics bundle. It took " + timer.elapsed(TimeUnit.MILLISECONDS) + " ms to process " + nBlocks + " blocks, " + nReads + " reads.");
@@ -261,6 +264,7 @@ public final class BaseRecalibratorDataflowUtils implements Serializable {
         .apply(ParDo
             .named("finalizeRecalTables")
             .of(new DoFn<RecalibrationTables, RecalibrationTables>() {
+                private static final long serialVersionUID = 1L;
               @Override
               public void processElement(ProcessContext c) throws Exception {
                 RecalibrationTables tables = c.element();

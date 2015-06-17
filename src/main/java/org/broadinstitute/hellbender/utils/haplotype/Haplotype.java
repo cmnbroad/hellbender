@@ -13,6 +13,7 @@ import org.broadinstitute.hellbender.utils.read.ReadUtils;
 import java.util.Arrays;
 
 public final class Haplotype extends Allele implements HasGenomeLocation {
+    private static final long serialVersionUID = 1L;
 
     private static final long serialVersionUID = 1l;
 

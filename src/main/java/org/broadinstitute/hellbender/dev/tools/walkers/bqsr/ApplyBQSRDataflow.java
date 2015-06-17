@@ -59,6 +59,7 @@ import java.util.List;
         programGroup = ReadProgramGroup.class
 )
 public final class ApplyBQSRDataflow extends DataflowCommandLineProgram {
+    private static final long serialVersionUID = 1L;
 
     @ArgumentCollection
     public final RequiredReadInputArgumentCollection readArguments = new RequiredReadInputArgumentCollection();
