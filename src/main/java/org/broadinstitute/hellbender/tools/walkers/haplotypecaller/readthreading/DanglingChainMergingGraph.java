@@ -17,6 +17,8 @@ import java.util.*;
 public abstract class DanglingChainMergingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSampleEdge> {
 
     private static final int MAX_CIGAR_COMPLEXITY = 3;
+    private static final long serialVersionUID = 1l;
+
     private int maxMismatchesInDanglingHead = -1;
 
     protected boolean alreadyBuilt;
@@ -33,6 +35,7 @@ public abstract class DanglingChainMergingGraph extends BaseGraph<MultiDeBruijnV
         this.maxMismatchesInDanglingHead = maxMismatchesInDanglingHead;
     }
 
+    @Override
     public DanglingChainMergingGraph clone() {
         return (DanglingChainMergingGraph) super.clone();
     }

@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DanglingChainMergingGraphUnitTest extends BaseTest {
+public final class DanglingChainMergingGraphUnitTest extends BaseTest {
 
     public static byte[] getBytes(final String alignment) {
         return alignment.replace("-","").getBytes();

@@ -321,6 +321,7 @@ public class ReadThreadingGraph extends DanglingChainMergingGraph implements Kme
         return nonUniqueKmers.size() * 4 > uniqueKmers.size();
     }
 
+    @Override
     public ReadThreadingGraph clone() {
         return (ReadThreadingGraph) super.clone();
     }
