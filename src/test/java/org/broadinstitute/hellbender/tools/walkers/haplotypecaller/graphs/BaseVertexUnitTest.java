@@ -4,7 +4,7 @@ import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class BaseVertexUnitTest extends BaseTest {
+public final class BaseVertexUnitTest extends BaseTest {
     @Test
     public void testBasic() {
         final byte[] bases = "ACT".getBytes();

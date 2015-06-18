@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.util.*;
 
 /**
@@ -31,15 +33,15 @@ public final class CommonSuffixSplitter {
      * @return true if some useful splitting was done, false otherwise
      */
     public static boolean split(final SeqGraph graph, final SeqVertex v) {
-        if ( graph == null ) throw new IllegalArgumentException("graph cannot be null");
-        if ( v == null ) throw new IllegalArgumentException("v cannot be null");
+        Utils.nonNull(graph, "graph cannot be null");
+        Utils.nonNull(v, "v cannot be null");
         if ( ! graph.vertexSet().contains(v) ) throw new IllegalArgumentException("graph doesn't contain vertex v " + v);
 
         final Collection<SeqVertex> toSplit = graph.incomingVerticesOf(v);
-        if ( toSplit.size() < 2 )
+        if ( toSplit.size() < 2 ){
             // Can only split at least 2 vertices
             return false;
-        else if ( ! safeToSplit(graph, v, toSplit) ) {
+        } else if ( ! safeToSplit(graph, v, toSplit) ) {
             return false;
         } else {
             final SeqVertex suffixVTemplate = commonSuffix(toSplit);

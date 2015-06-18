@@ -56,9 +56,9 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
         if (bases != null) return bases;
         final KBestHaplotype tail = tail();
         final SeqVertex head = head();
-        if (tail == null)
+        if (tail == null) {
             bases = head.getSequence();
-        else {
+        } else {
             final byte[] tailBases = tail.bases();
             final byte[] headBases = head.getSequence();
             final int length = tailBases.length + headBases.length;

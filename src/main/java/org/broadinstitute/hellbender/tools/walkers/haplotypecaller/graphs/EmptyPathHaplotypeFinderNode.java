@@ -50,10 +50,8 @@ final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
 
     @Override
     public KBestHaplotype getKBest(final int k) {
-        if (k < 0)
-            throw new IllegalArgumentException("k cannot be negative");
-        if (k > 0)
-            throw new IllegalArgumentException("k cannot greater than the possible haplotype count");
+        if (k < 0) throw new IllegalArgumentException("k cannot be negative");
+        if (k > 0) throw new IllegalArgumentException("k cannot greater than the possible haplotype count");
         return singleHaplotypePath;
     }
 
@@ -64,15 +62,16 @@ final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
 
     @Override
     public double score(final byte[] bases, final int offset, final int length) {
-        if (bases == null) throw new IllegalArgumentException("bases cannot be null");
+        Utils.nonNull(bases, "bases cannot be null");
         if (offset < 0) throw new IllegalArgumentException("the offset cannot be negative");
         if (length < 0) throw new IllegalArgumentException("the length cannot be negative");
         if (offset + length > bases.length) throw new IllegalArgumentException("the offset and length go beyond the array size");
         final byte[] vertexBases = singleHaplotypePath.head().getSequence();
-        if (length != vertexBases.length)
+        if (length != vertexBases.length) {
             return Double.NaN;
-        else
-            return Utils.equalRange(bases, offset, vertexBases, 0, length)? 0.0 : Double.NaN;
+        } else {
+            return Utils.equalRange(bases, offset, vertexBases, 0, length) ? 0.0 : Double.NaN;
+        }
     }
 
     /**

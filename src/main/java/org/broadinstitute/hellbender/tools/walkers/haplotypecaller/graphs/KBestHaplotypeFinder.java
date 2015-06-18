@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.jgrapht.alg.CycleDetector;
 
@@ -58,9 +59,9 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> {
      * </ul>
      */
     public KBestHaplotypeFinder(final SeqGraph graph, final Set<SeqVertex> sources, final Set<SeqVertex> sinks) {
-        if (graph == null) throw new IllegalArgumentException("graph cannot be null");
-        if (sources == null) throw new IllegalArgumentException("source cannot be null");
-        if (sinks == null) throw new IllegalArgumentException("sink cannot be null");
+        Utils.nonNull(graph, "graph cannot be null");
+        Utils.nonNull(sources, "sources cannot be null");
+        Utils.nonNull(sinks, "sinks cannot be null");
         if (!graph.containsAllVertices(sources)) throw new IllegalArgumentException("source does not belong to the graph");
         if (!graph.containsAllVertices(sinks)) throw new IllegalArgumentException("sink does not belong to the graph");
 

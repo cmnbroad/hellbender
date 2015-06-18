@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.collections.PrimitivePair;
 
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public final class GraphUtils {
      * @return the min of the kmers, if kmers is empty the result is 0
      */
     public static int minKmerLength(final Collection<byte[]> kmers) {
-        if ( kmers == null ) throw new IllegalArgumentException("kmers cannot be null");
+        Utils.nonNull(kmers, "kmers cannot be null");
 
         if ( kmers.isEmpty() ) return 0;
         int min = Integer.MAX_VALUE;

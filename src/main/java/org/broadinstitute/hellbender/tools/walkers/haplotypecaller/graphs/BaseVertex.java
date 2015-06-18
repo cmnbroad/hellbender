@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.util.Arrays;
 
 /**
@@ -21,7 +23,7 @@ public class BaseVertex {
      * @param sequence a non-null, non-empty sequence of bases contained in this vertex
      */
     public BaseVertex(final byte[] sequence) {
-        if ( sequence == null ) throw new IllegalArgumentException("Sequence cannot be null");
+        Utils.nonNull(sequence, "Sequence cannot be null");
         this.sequence = sequence;
     }
 
@@ -60,19 +62,7 @@ public class BaseVertex {
 
         BaseVertex that = (BaseVertex) o;
 
-        if (!Arrays.equals(sequence, that.sequence)) return false;
-
-        return true;
-    }
-
-    /**
-     * Are b and this equal according to their base sequences?
-     *
-     * @param b the vertex to compare ourselves to
-     * @return true if b and this have the same sequence, regardless of other attributes that might differentiate them
-     */
-    public boolean seqEquals(final BaseVertex b) {
-        return Arrays.equals(this.getSequence(), b.getSequence());
+        return Arrays.equals(sequence, that.sequence);
     }
 
     /**
@@ -85,6 +75,16 @@ public class BaseVertex {
             cachedHashCode = Arrays.hashCode(sequence);
         }
         return cachedHashCode;
+    }
+
+    /**
+     * Are b and this equal according to their base sequences?
+     *
+     * @param b the vertex to compare ourselves to
+     * @return true if b and this have the same sequence, regardless of other attributes that might differentiate them
+     */
+    public boolean seqEquals(final BaseVertex b) {
+        return Arrays.equals(this.getSequence(), b.getSequence());
     }
 
     @Override
