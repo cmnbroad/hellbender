@@ -4,9 +4,12 @@ import com.google.api.services.genomics.model.Read;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 import com.google.cloud.dataflow.sdk.transforms.Create;
+import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.util.GcsUtil;
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath;
 import com.google.cloud.dataflow.sdk.values.PCollection;
+import com.google.cloud.genomics.dataflow.coders.GenericJsonCoder;
 import com.google.cloud.genomics.dataflow.readers.bam.ReadConverter;
 import htsjdk.samtools.SAMException;
 import htsjdk.samtools.SAMFileHeader;
@@ -24,6 +27,7 @@ import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.programgroups.ReadProgramGroup;
+import org.broadinstitute.hellbender.dev.pipelines.bqsr.BaseRecalOutput;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.BaseRecalibratorDataflowUtils;
 import org.broadinstitute.hellbender.dev.pipelines.bqsr.ReadsFilter;
 import org.broadinstitute.hellbender.engine.FeatureDataSource;
@@ -120,6 +124,7 @@ public class BaseRecalibratorDataflow extends DataflowCommandLineProgram {
             PCollection<RecalibrationTables> aggregated =
                     BaseRecalibratorDataflowUtils.getRecalibrationTables(header, reads, referencePath, BRAC, skipIntervals);
 
+
             // If saving textual output then we need to make sure we can get to the output
             if (saveTextualTables) {
                 if (null == outputTablesPath) {
@@ -167,49 +172,48 @@ public class BaseRecalibratorDataflow extends DataflowCommandLineProgram {
 
     /** reads local disks or GCS -> header, and PCollection */
     private PCollection<Read> ingestReadsAndGrabHeader(final Pipeline pipeline, List<String> filenames) throws IOException {
-
-        if (filenames.size() > 1) {
-            throw new UserException("Sorry, we only support a single input file for now.");
-        }
-        // TODO: support more than one input.
-        String beforePath = filenames.get(0);
-
-        // input reads
-        if (BucketUtils.isCloudStorageUrl(beforePath)) {
-            // set up ingestion on the cloud
-            // but read the header locally
-            GcsPath path = GcsPath.fromUri(beforePath);
-            InputStream inputstream = Channels.newInputStream(new GcsUtil.GcsUtilFactory().create(pipeline.getOptions())
-                    .open(path));
-            SamReader reader = SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(SamInputResource.of(inputstream));
-            header = reader.getFileHeader();
-
-            final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
-            final ReadFilter readFilter = BaseRecalibratorWorker.readFilter();
-            final List<SimpleInterval> intervals = BRAC.intervalArgumentCollection.intervalsSpecified() ? BRAC.intervalArgumentCollection.getIntervals(sequenceDictionary) :
-                    IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
-            return new ReadsSource(beforePath, pipeline).getReadPCollection(intervals, ValidationStringency.SILENT)
-                    // keep only the ones BQSR's interested in.
-                    .apply(new ReadsFilter(readFilter, header));
-        } else {
-            // ingestion from local file
-            SamReader reader = SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(new File(beforePath));
-            header = reader.getFileHeader();
-            List<Read> readLst = new ArrayList<>();
-            ReadFilter readFilter = BaseRecalibratorWorker.readFilter();
-            for (SAMRecord sr : reader) {
-                if (!readFilter.test(sr)) continue;
-                try {
-                    Read e = ReadConverter.makeRead(sr);
-                    readLst.add(e);
-                } catch (SAMException x) {
-                    logger.warn("Skipping read " + sr.getReadName() + " because we can't convert it.");
-                } catch (NullPointerException y) {
-                    logger.warn("Skipping read " + sr.getReadName() + " because we can't convert it. (null?)");
-                }
+            if (filenames.size() > 1) {
+                throw new UserException("Sorry, we only support a single input file for now.");
             }
-            return pipeline.apply(Create.of(readLst).withName("input ingest"));
-        }
+            // TODO: support more than one input.
+            String beforePath = filenames.get(0);
+
+            // input reads
+            if (BucketUtils.isCloudStorageUrl(beforePath)) {
+                // set up ingestion on the cloud
+                // but read the header locally
+                GcsPath path = GcsPath.fromUri(beforePath);
+                InputStream inputstream = Channels.newInputStream(new GcsUtil.GcsUtilFactory().create(pipeline.getOptions())
+                        .open(path));
+                SamReader reader = SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(SamInputResource.of(inputstream));
+                header = reader.getFileHeader();
+
+                final SAMSequenceDictionary sequenceDictionary = header.getSequenceDictionary();
+                final ReadFilter readFilter = BaseRecalibratorWorker.readFilter();
+                final List<SimpleInterval> intervals = BRAC.intervalArgumentCollection.intervalsSpecified() ? BRAC.intervalArgumentCollection.getIntervals(sequenceDictionary) :
+                        IntervalUtils.getAllIntervalsForReference(sequenceDictionary);
+                return new ReadsSource(beforePath, pipeline).getReadPCollection(intervals, ValidationStringency.SILENT)
+                        // keep only the ones BQSR's interested in.
+                        .apply(new ReadsFilter(readFilter, header));
+            } else {
+                // ingestion from local file
+                SamReader reader = SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(new File(beforePath));
+                header = reader.getFileHeader();
+                List<Read> readLst = new ArrayList<>();
+                ReadFilter readFilter = BaseRecalibratorWorker.readFilter();
+                for (SAMRecord sr : reader) {
+                    if (!readFilter.test(sr)) continue;
+                    try {
+                        Read e = ReadConverter.makeRead(sr);
+                        readLst.add(e);
+                    } catch (SAMException x) {
+                        logger.warn("Skipping read " + sr.getReadName() + " because we can't convert it.");
+                    } catch (NullPointerException y) {
+                        logger.warn("Skipping read " + sr.getReadName() + " because we can't convert it. (null?)");
+                    }
+                }
+                return pipeline.apply(Create.of(readLst).withName("input ingest")).setCoder(GenericJsonCoder.of(Read.class));
+            }
     }
 
     /** list of known intervals -> PCollection */

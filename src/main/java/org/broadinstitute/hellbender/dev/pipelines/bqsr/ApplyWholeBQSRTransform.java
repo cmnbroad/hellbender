@@ -2,10 +2,8 @@ package org.broadinstitute.hellbender.dev.pipelines.bqsr;
 
 import com.google.api.services.genomics.model.Read;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
-import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PCollectionTuple;
-import com.google.cloud.dataflow.sdk.values.POutput;
 import htsjdk.samtools.SAMFileHeader;
 import org.broadinstitute.hellbender.dev.tools.walkers.bqsr.BaseRecalibrationArgumentCollection;
 import org.broadinstitute.hellbender.tools.ApplyBQSRArgumentCollection;
