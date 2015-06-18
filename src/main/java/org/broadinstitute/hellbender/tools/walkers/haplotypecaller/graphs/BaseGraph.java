@@ -4,6 +4,7 @@ import com.google.appengine.repackaged.com.google.common.collect.Sets;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.jgrapht.EdgeFactory;
 import org.jgrapht.alg.CycleDetector;
@@ -202,7 +203,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param blacklistedEdges edges to ignore in the traversal down; useful to exclude the non-reference dangling paths
      * @return the next vertex (but not necessarily on the reference path if allowNonRefPaths is true) if it exists, otherwise null
      */
-    public V getNextReferenceVertex( final V v, final boolean allowNonRefPaths, final Collection<MultiSampleEdge> blacklistedEdges ) {
+    public V getNextReferenceVertex( final V v, final boolean allowNonRefPaths, final Collection<? extends BaseEdge> blacklistedEdges ) {
         if( v == null ) { return null; }
 
         // variable must be mutable because outgoingEdgesOf is an immutable collection
@@ -218,8 +219,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
         if ( allowNonRefPaths ) {
             edges = new HashSet<>(edges);  // edges was immutable
             edges.removeAll(blacklistedEdges);
-            if ( edges.size() == 1 )
+            if ( edges.size() == 1 ) {
                 return getEdgeTarget(edges.iterator().next());
+            }
         }
 
         return null;
@@ -268,9 +270,8 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param vertices one or more vertices to add
      */
     public void addVertices(final V... vertices) {
-        for ( final V v : vertices ) {
-            addVertex(v);
-        }
+        Utils.nonNull(vertices);
+        addVertices(Arrays.asList(vertices));
     }
 
     /**
@@ -278,6 +279,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param vertices one or more vertices to add
      */
     public void addVertices(final Collection<V> vertices) {
+        Utils.nonNull(vertices);
         for ( final V v : vertices ) {
             addVertex(v);
         }
@@ -341,15 +343,10 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param destination File to write to
      */
     public void printGraph(final File destination, final int pruneFactor) {
-        PrintStream stream = null;
-
-        try {
-            stream = new PrintStream(new FileOutputStream(destination));
+        try (PrintStream stream = new PrintStream(new FileOutputStream(destination))) {
             printGraph(stream, true, pruneFactor);
-        } catch ( FileNotFoundException e ) {
-            throw new RuntimeException(e);
-        } finally {
-            if ( stream != null ) stream.close();
+        } catch ( final FileNotFoundException e ) {
+            throw new UserException.CouldNotReadInputFile(destination, e);
         }
     }
 
@@ -358,15 +355,15 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
             graphWriter.println("digraph assemblyGraphs {");
 
         for( final E edge : edgeSet() ) {
-            graphWriter.println("\t" + getEdgeSource(edge).toString() + " -> " + getEdgeTarget(edge).toString() + " [" + (edge.getMultiplicity() > 0 && edge.getMultiplicity() <= pruneFactor ? "style=dotted,color=grey," : "") + "label=\"" + edge.getDotLabel() + "\"];");
+            graphWriter.println('\t' + getEdgeSource(edge).toString() + " -> " + getEdgeTarget(edge).toString() + " [" + (edge.getMultiplicity() > 0 && edge.getMultiplicity() <= pruneFactor ? "style=dotted,color=grey," : "") + "label=\"" + edge.getDotLabel() + "\"];");
             if( edge.isRef() ) {
-                graphWriter.println("\t" + getEdgeSource(edge).toString() + " -> " + getEdgeTarget(edge).toString() + " [color=red];");
+                graphWriter.println('\t' + getEdgeSource(edge).toString() + " -> " + getEdgeTarget(edge).toString() + " [color=red];");
             }
         }
 
         for( final V v : vertexSet() ) {
 //            graphWriter.println("\t" + v.toString() + " [label=\"" + v + "\",shape=box]");
-            graphWriter.println("\t" + v.toString() + " [label=\"" + new String(getAdditionalSequence(v)) + v.additionalInfo() + "\",shape=box]");
+            graphWriter.println('\t' + v.toString() + " [label=\"" + new String(getAdditionalSequence(v)) + v.additionalInfo() + "\",shape=box]");
         }
 
         if ( writeHeader ) {
@@ -440,7 +437,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * regardless of its direction, from the reference source vertex
      */
     public void removeVerticesNotConnectedToRefRegardlessOfEdgeDirection() {
-        final HashSet<V> toRemove = new HashSet<>(vertexSet());
+        final Set<V> toRemove = new HashSet<>(vertexSet());
 
         final V refV = getReferenceSourceVertex();
         if ( refV != null ) {
@@ -511,8 +508,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
         final Set<E> edges1 = g1.edgeSet();
         final Set<E> edges2 = g2.edgeSet();
 
-        if ( vertices1.size() != vertices2.size() || edges1.size() != edges2.size() )
+        if ( vertices1.size() != vertices2.size() || edges1.size() != edges2.size() ) {
             return false;
+        }
 
         for ( final T v1 : vertices1 ) {
             boolean found = false;
@@ -624,10 +622,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a non-null graph
      */
     public BaseGraph<V,E> subsetToNeighbors(final V target, final int distance) {
-        if ( target == null ) throw new IllegalArgumentException("Target cannot be null");
+        Utils.nonNull(target, "Target cannot be null");
         if ( ! containsVertex(target) ) throw new IllegalArgumentException("Graph doesn't contain vertex " + target);
         if ( distance < 0 ) throw new IllegalArgumentException("Distance must be >= 0 but got " + distance);
-
 
         final Set<V> toKeep = verticesWithinDistance(target, distance);
         final Set<V> toRemove = new HashSet<>(vertexSet());

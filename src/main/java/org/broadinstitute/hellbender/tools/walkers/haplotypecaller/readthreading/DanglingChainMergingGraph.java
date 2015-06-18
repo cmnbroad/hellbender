@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.BaseEdge;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.BaseGraph;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.GraphUtils;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.MultiSampleEdge;
@@ -410,7 +411,7 @@ public abstract class DanglingChainMergingGraph extends BaseGraph<MultiDeBruijnV
      */
     private List<MultiDeBruijnVertex> getReferencePath(final MultiDeBruijnVertex start,
                                                          final TraversalDirection direction,
-                                                         final Collection<MultiSampleEdge> blacklistedEdges) {
+                                                         final Collection<? extends BaseEdge> blacklistedEdges) {
 
         final List<MultiDeBruijnVertex> path = new ArrayList<>();
 

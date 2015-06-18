@@ -31,9 +31,24 @@ public final class BaseGraphUnitTest extends BaseTest {
     }
 
     @Test
-    public void sourcesAndSinks(){
+    public void sequenceGraph(){
+        final SeqGraph seqGraph = graph.convertToSequenceGraph();
+        Assert.assertEquals(seqGraph.vertexSet().size(), 5);
+        Assert.assertEquals(seqGraph.edgeSet().size(), 5);
+    }
+    @Test
+    public void sourcesAndSinksAndNeighbors(){
         Assert.assertEquals(graph.getSources(), Collections.singleton(v1));
         Assert.assertEquals(graph.getSinks(), Collections.singleton(v5));
+        Assert.assertEquals(graph.neighboringVerticesOf(v2), new HashSet<>(Arrays.asList(v1, v3, v4)));
+        Assert.assertTrue(graph.hasCycles());
+        Assert.assertTrue(graph.containsAllVertices(Arrays.asList(v1, v3, v4)));
+        Assert.assertEquals(graph.subsetToNeighbors(v1, 0).vertexSet(), new HashSet<>(Arrays.asList(v1)));
+        Assert.assertEquals(graph.subsetToNeighbors(v1, 1).vertexSet(), new HashSet<>(Arrays.asList(v1, v2)));
+        Assert.assertEquals(graph.subsetToNeighbors(v1, 2).vertexSet(), new HashSet<>(Arrays.asList(v1, v2, v3, v4)));
+        Assert.assertEquals(graph.subsetToNeighbors(v1, 3).vertexSet(), new HashSet<>(Arrays.asList(v1, v2, v3, v4, v5)));
+        Assert.assertEquals(graph.subsetToNeighbors(v1, 3), graph);
+        Assert.assertNull(graph.getReferenceSourceVertex());
     }
 
     @Test
@@ -89,6 +104,7 @@ public final class BaseGraphUnitTest extends BaseTest {
     public void testIsRefSourceAndSink() throws Exception {
 
         final SeqGraph g = new SeqGraph(11);
+        Assert.assertEquals(g.getKmerSize(), 11);
         g.addVertex(v1);
         Assert.assertTrue(g.isRefSource(v1));
         Assert.assertTrue(g.isRefSink(v1));
@@ -98,8 +114,18 @@ public final class BaseGraphUnitTest extends BaseTest {
         g.addEdge(v1, v2);
         g.addEdge(v2, v3);
         final BaseEdge refEdge = new BaseEdge(true, 1);
-        g.addEdge(v3, v4, refEdge);
-        g.addEdge(v4, v5);
+
+        final int edgeCountWayBefore = g.edgeSet().size();
+        g.addOrUpdateEdge(v3, v4, refEdge);
+        final int edgeCountBefore = g.edgeSet().size();
+        Assert.assertEquals(edgeCountWayBefore+1, edgeCountBefore);
+        g.addOrUpdateEdge(v3, v4, refEdge);
+        final int edgeCountAfter = g.edgeSet().size();
+        Assert.assertEquals(edgeCountBefore, edgeCountAfter);
+
+        final BaseEdge v4v5 = g.addEdge(v4, v5);
+        Assert.assertEquals(g.incomingEdgeOf(v5), v4v5);
+        Assert.assertEquals(g.outgoingEdgeOf(v4), v4v5);
 
         Assert.assertFalse(g.isRefSource(v1));
         Assert.assertFalse(g.isRefSink(v1));
@@ -123,7 +149,18 @@ public final class BaseGraphUnitTest extends BaseTest {
 
         Assert.assertNull(g.getPrevReferenceVertex(null));
         Assert.assertNull(g.getPrevReferenceVertex(v1));
-        Assert.assertNotNull(g.getPrevReferenceVertex(v4));
+        Assert.assertEquals(g.getPrevReferenceVertex(v4), v3);
+
+        Assert.assertNull(g.getNextReferenceVertex(null));
+        Assert.assertNull(g.getNextReferenceVertex(v1));
+        Assert.assertEquals(g.getNextReferenceVertex(v3), v4);
+
+        Assert.assertEquals(g.getNextReferenceVertex(v4, false, Arrays.asList(v4v5)), null);
+        Assert.assertEquals(g.getNextReferenceVertex(v4, true, Arrays.asList(v4v5)), null);
+
+        Assert.assertEquals(g.subsetToRefSource(), g);
+        g.toString(); //just checking non-blowup
+
     }
 
     @Test
