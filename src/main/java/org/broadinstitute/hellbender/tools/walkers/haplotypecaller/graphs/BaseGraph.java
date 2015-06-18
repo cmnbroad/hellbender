@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import com.google.appengine.repackaged.com.google.common.collect.Sets;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -227,16 +228,11 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
     /**
      * Traverse the graph and get the previous reference vertex if it exists
      * @param v the current vertex, can be null
-     * @return  the previous reference vertex if it exists
+     * @return  the previous reference vertex if it exists or null otherwise.
      */
     public V getPrevReferenceVertex( final V v ) {
         if( v == null ) { return null; }
-        for( final E edgeToTest : incomingEdgesOf(v) ) {
-            if( isReferenceNode(getEdgeSource(edgeToTest)) ) {
-                return getEdgeSource(edgeToTest);
-            }
-        }
-        return null;
+        return incomingEdgesOf(v).stream().map(e -> getEdgeSource(e)).filter(vrtx -> isReferenceNode(vrtx)).findFirst().orElse(null);
     }
 
     /**
@@ -319,11 +315,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a set of vertices connected by outgoing edges from v
      */
     public Set<V> outgoingVerticesOf(final V v) {
-        final Set<V> s = new LinkedHashSet<>();
-        for ( final E e : outgoingEdgesOf(v) ) {
-            s.add(getEdgeTarget(e));
-        }
-        return s;
+        return outgoingEdgesOf(v).stream().map(e -> getEdgeTarget(e)).collect(Collectors.toSet());
     }
 
     /**
@@ -332,11 +324,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a set of vertices {X} connected X -> v
      */
     public Set<V> incomingVerticesOf(final V v) {
-        final Set<V> s = new LinkedHashSet<>();
-        for ( final E e : incomingEdgesOf(v) ) {
-            s.add(getEdgeSource(e));
-        }
-        return s;
+        return incomingEdgesOf(v).stream().map(e -> getEdgeSource(e)).collect(Collectors.toSet());
     }
 
     /**
@@ -345,9 +333,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a set of vertices {X} connected X -> v or v -> Y
      */
     public Set<V> neighboringVerticesOf(final V v) {
-        final Set<V> s = incomingVerticesOf(v);
-        s.addAll(outgoingVerticesOf(v));
-        return s;
+        return Sets.union(incomingVerticesOf(v), outgoingVerticesOf(v));
     }
 
     /**
@@ -618,8 +604,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a set of vertices within distance of source
      */
     protected Set<V> verticesWithinDistance(final V source, final int distance) {
-        if ( distance == 0 )
+        if ( distance == 0 ) {
             return Collections.singleton(source);
+        }
 
         final Set<V> found = new HashSet<>();
         found.add(source);
@@ -671,10 +658,8 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * Also if the input collection is empty. Otherwise it returns {@code false}.
      */
     public boolean containsAllVertices(final Collection<? extends V> vertices) {
-        if (vertices == null) throw new IllegalArgumentException("the input vertices collection cannot be null");
-        for (final V vertex : vertices)
-            if (!containsVertex(vertex)) return false;
-        return true;
+        Utils.nonNull(vertices, "the input vertices collection cannot be null");
+        return vertices.stream().allMatch(v -> containsVertex(v));
     }
 
     /**

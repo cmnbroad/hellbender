@@ -120,6 +120,10 @@ public final class BaseGraphUnitTest extends BaseTest {
         Assert.assertFalse(g.isRefSource(v5));
         Assert.assertFalse(g.isRefSink(v5));
         Assert.assertFalse(g.isReferenceNode(v5));
+
+        Assert.assertNull(g.getPrevReferenceVertex(null));
+        Assert.assertNull(g.getPrevReferenceVertex(v1));
+        Assert.assertNotNull(g.getPrevReferenceVertex(v4));
     }
 
     @Test
