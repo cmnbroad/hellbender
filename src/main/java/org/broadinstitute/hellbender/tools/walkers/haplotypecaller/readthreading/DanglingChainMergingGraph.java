@@ -411,7 +411,7 @@ public abstract class DanglingChainMergingGraph extends BaseGraph<MultiDeBruijnV
      */
     private List<MultiDeBruijnVertex> getReferencePath(final MultiDeBruijnVertex start,
                                                          final TraversalDirection direction,
-                                                         final Collection<? extends BaseEdge> blacklistedEdges) {
+                                                         final Collection<MultiSampleEdge> blacklistedEdges) {
 
         final List<MultiDeBruijnVertex> path = new ArrayList<>();
 

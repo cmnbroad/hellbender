@@ -78,7 +78,7 @@ public final class MultiSampleEdge extends BaseEdge {
 
     @Override
     public String getDotLabel() {
-        return super.getDotLabel() + "/" + getPruningMultiplicity();
+        return super.getDotLabel() + '/' + getPruningMultiplicity();
     }
 
     @VisibleForTesting

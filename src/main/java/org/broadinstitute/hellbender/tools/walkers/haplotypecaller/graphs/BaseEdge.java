@@ -39,7 +39,7 @@ public class BaseEdge {
      * Get the number of observations of paths connecting two vertices
      * @return a positive integer >= 0
      */
-    public int getMultiplicity() {
+    public final int getMultiplicity() {
         return multiplicity;
     }
 
@@ -75,7 +75,7 @@ public class BaseEdge {
      * Set the multiplicity of this edge to value
      * @param value an integer >= 0
      */
-    public void setMultiplicity( final int value ) {
+    public final void setMultiplicity( final int value ) {
         if ( multiplicity < 0 ) throw new IllegalArgumentException("multiplicity must be >= 0");
         multiplicity = value;
     }
@@ -84,7 +84,7 @@ public class BaseEdge {
      * Does this edge indicate a path through the reference graph?
      * @return true if so
      */
-    public boolean isRef() {
+    public final boolean isRef() {
         return isRef;
     }
 
@@ -92,7 +92,7 @@ public class BaseEdge {
      * Indicate that this edge follows the reference sequence, or not
      * @param isRef true if this is a reference edge
      */
-    public void setIsRef( final boolean isRef ) {
+    public final void setIsRef( final boolean isRef ) {
         this.isRef = isRef;
     }
 
@@ -111,7 +111,7 @@ public class BaseEdge {
      * @param edge the edge to add
      * @return this
      */
-    public BaseEdge add(final BaseEdge edge) {
+    public final BaseEdge add(final BaseEdge edge) {
         Utils.nonNull(edge, "edge cannot be null");
         this.multiplicity += edge.getMultiplicity();
         this.isRef = this.isRef || edge.isRef();
@@ -139,13 +139,13 @@ public class BaseEdge {
      *
      * @param edge the edge to max
      */
-    public BaseEdge max(final BaseEdge edge) {
+    public final BaseEdge max(final BaseEdge edge) {
         Utils.nonNull(edge);
         return new BaseEdge(this.isRef() || edge.isRef(), Math.max(this.getMultiplicity(), edge.getMultiplicity()));
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
         return "BaseEdge{" +
                 "multiplicity=" + multiplicity +
                 ", isRef=" + isRef +

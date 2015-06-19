@@ -97,10 +97,8 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return a newly allocated SequenceGraph
      */
     public SeqGraph convertToSequenceGraph() {
-
         final SeqGraph seqGraph = new SeqGraph(kmerSize);
         final Map<V, SeqVertex> vertexMap = new HashMap<>();
-
 
         // create all of the equivalent seq graph vertices
         for ( final V dv : vertexSet() ) {
@@ -114,7 +112,6 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
         for( final E e : edgeSet() ) {
             final SeqVertex seqInV = vertexMap.get(getEdgeSource(e));
             final SeqVertex seqOutV = vertexMap.get(getEdgeTarget(e));
-            //logger.info("Adding edge " + seqInV + " -> " + seqOutV);
             seqGraph.addEdge(seqInV, seqOutV, new BaseEdge(e.isRef(), e.getMultiplicity()));
         }
 
@@ -193,7 +190,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return  the next reference vertex if it exists, otherwise null
      */
     public V getNextReferenceVertex( final V v ) {
-        return getNextReferenceVertex(v, false, Collections.<MultiSampleEdge>emptyList());
+        return getNextReferenceVertex(v, false, Collections.<E>emptyList());
     }
 
     /**
@@ -203,7 +200,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param blacklistedEdges edges to ignore in the traversal down; useful to exclude the non-reference dangling paths
      * @return the next vertex (but not necessarily on the reference path if allowNonRefPaths is true) if it exists, otherwise null
      */
-    public V getNextReferenceVertex( final V v, final boolean allowNonRefPaths, final Collection<? extends BaseEdge> blacklistedEdges ) {
+    public V getNextReferenceVertex( final V v, final boolean allowNonRefPaths, final Collection<E> blacklistedEdges ) {
         if( v == null ) { return null; }
 
         // variable must be mutable because outgoingEdgesOf is an immutable collection
@@ -217,8 +214,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
 
         // if we got here, then we aren't on a reference path
         if ( allowNonRefPaths ) {
-            edges = new HashSet<>(edges);  // edges was immutable
-            edges.removeAll(blacklistedEdges);
+            edges = Sets.difference(edges, new HashSet<>(blacklistedEdges));  // edges was immutable
             if ( edges.size() == 1 ) {
                 return getEdgeTarget(edges.iterator().next());
             }
@@ -246,8 +242,8 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @return              byte[] array holding the reference bases, this can be null if there are no nodes between the starting and ending vertex (insertions for example)
      */
     public byte[] getReferenceBytes( final V fromVertex, final V toVertex, final boolean includeStart, final boolean includeStop ) {
-        if( fromVertex == null ) { throw new IllegalArgumentException("Starting vertex in requested path cannot be null."); }
-        if( toVertex == null ) { throw  new IllegalArgumentException("From vertex in requested path cannot be null."); }
+        Utils.nonNull(fromVertex, "Starting vertex in requested path cannot be null.");
+        Utils.nonNull(toVertex, "From vertex in requested path cannot be null.");
 
         byte[] bytes = null;
         V v = fromVertex;
@@ -280,9 +276,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      */
     public void addVertices(final Collection<V> vertices) {
         Utils.nonNull(vertices);
-        for ( final V v : vertices ) {
-            addVertex(v);
-        }
+        vertices.forEach(v -> addVertex(v));
     }
 
     /**
@@ -351,8 +345,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
     }
 
     public void printGraph(final PrintStream graphWriter, final boolean writeHeader, final int pruneFactor) {
-        if ( writeHeader )
+        if ( writeHeader ) {
             graphWriter.println("digraph assemblyGraphs {");
+        }
 
         for( final E edge : edgeSet() ) {
             graphWriter.println('\t' + getEdgeSource(edge).toString() + " -> " + getEdgeTarget(edge).toString() + " [" + (edge.getMultiplicity() > 0 && edge.getMultiplicity() <= pruneFactor ? "style=dotted,color=grey," : "") + "label=\"" + edge.getDotLabel() + "\"];");
@@ -414,8 +409,7 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      * @param pruneFactor all edges with multiplicity < this factor that aren't ref edges will be removed
      */
     public void pruneLowWeightChains( final int pruneFactor ) {
-        final LowWeightChainPruner<V,E> pruner = new LowWeightChainPruner<>(pruneFactor);
-        pruner.pruneLowWeightChains(this);
+        new LowWeightChainPruner<V,E>(pruneFactor).pruneLowWeightChains(this);
     }
 
     /**
@@ -423,7 +417,8 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      */
     public void removeSingletonOrphanVertices() {
         // Run through the graph and clean up singular orphaned nodes
-        final List<V> verticesToRemove = new LinkedList<>();
+        final List<V> verticesToRemove = vertexSet().stream()
+                .filter(v -> inDegreeOf(v) == 0 && outDegreeOf(v) == 0 && !isRefSource(v))
         for( final V v : vertexSet() ) {
             if( inDegreeOf(v) == 0 && outDegreeOf(v) == 0 && !isRefSource(v) ) {
                 verticesToRemove.add(v);

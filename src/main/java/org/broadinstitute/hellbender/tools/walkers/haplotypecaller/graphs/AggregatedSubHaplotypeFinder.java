@@ -34,7 +34,7 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
      * <p>As more results are requested the array will grow. All positions and solutions are
      * calculated up to {@code i}</p>.
      */
-    private ArrayList<KBestHaplotype> rankedSubHaplotype;
+    private List<KBestHaplotype> rankedSubHaplotype;
 
     /**
      * Priority queue with next best haplotype solution from each sub-finder; previous ones are
@@ -68,8 +68,8 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
     @Override
     public Set<Pair<? extends KBestSubHaplotypeFinder, String>> subFinderLabels() {
         final int subFinderCount = subFinders.size();
-        final String edgeCost = String.format("%.2f", -Math.log10((double) subFinderCount));
-        final Set<Pair<? extends  KBestSubHaplotypeFinder,String>> result = new LinkedHashSet<>(subFinderCount);
+        final String edgeCost = String.format("%.2f", -Math.log10(subFinderCount));
+        final Set<Pair<? extends  KBestSubHaplotypeFinder, String>> result = new LinkedHashSet<>(subFinderCount);
         for (final KBestSubHaplotypeFinder subFinder : subFinders) {
             result.add(new MutablePair<>(subFinder, edgeCost));
         }
@@ -127,7 +127,6 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
             return rankedSubHaplotype.get(k);
         }
 
-        rankedSubHaplotype.ensureCapacity(k+1);
         for (int i = rankedSubHaplotype.size(); i <= k; i++) {
             // since k < possibleHaplotypeCount is guarantee no to be empty.
             if (nextBestSubHaplotypes.isEmpty()) {
@@ -155,7 +154,7 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
     /**
      * Custom implementation of {@link KBestHaplotype} to encapsulate sub-finder results.
      */
-    private class MyKBestHaplotypeResult extends KBestHaplotype {
+    private static final class MyKBestHaplotypeResult extends KBestHaplotype {
 
         private KBestSubHaplotypeFinder subFinder;
 
