@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * generic utility class that counts kmers
@@ -54,12 +55,10 @@ public final class KMerCounter {
      * @return a non-null collection of kmers
      */
     public Collection<Kmer> getKmersWithCountsAtLeast(final int minCount) {
-        final List<Kmer> result = new LinkedList<>();
-        for ( final CountedKmer countedKmer : getCountedKmers() ) {
-            if ( countedKmer.count >= minCount )
-                result.add(countedKmer.kmer);
-        }
-        return result;
+        return getCountedKmers().stream()
+                .filter(kmc -> kmc.count >= minCount)
+                .map(kmc -> kmc.kmer)
+                .collect(Collectors.toList());
     }
 
     /**

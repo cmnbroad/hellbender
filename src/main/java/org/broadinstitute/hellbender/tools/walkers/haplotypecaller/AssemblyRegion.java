@@ -6,9 +6,11 @@ import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
 import org.broadinstitute.hellbender.utils.GenomeLocParser;
 import org.broadinstitute.hellbender.utils.GenomeLocSortedSet;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Region of the genome that gets assembled by the local assembly engine.
@@ -79,9 +81,9 @@ public final class AssemblyRegion {
      * @param extension the active region extension to use for this active region
      */
     public AssemblyRegion( final GenomeLoc activeRegionLoc, final List<ActivityProfileState> supportingStates, final boolean isActive, final GenomeLocParser genomeLocParser, final int extension ) {
-        if ( activeRegionLoc == null ) throw new IllegalArgumentException("activeRegionLoc cannot be null");
+        Utils.nonNull(activeRegionLoc, "activeRegionLoc cannot be null");
+        Utils.nonNull(genomeLocParser, "genomeLocParser cannot be null");
         if ( activeRegionLoc.size() == 0 ) throw new IllegalArgumentException("Active region cannot be of zero size, but got " + activeRegionLoc);
-        if ( genomeLocParser == null ) throw new IllegalArgumentException("genomeLocParser cannot be null");
         if ( extension < 0 ) throw new IllegalArgumentException("extension cannot be < 0 but got " + extension);
 
         this.reads = new ArrayList<>();
@@ -164,14 +166,9 @@ public final class AssemblyRegion {
      * @return an ordered list of active region where each interval is contained within intervals
      */
     public List<AssemblyRegion> splitAndTrimToIntervals(final GenomeLocSortedSet intervals) {
-        final List<GenomeLoc> allOverlapping = intervals.getOverlapping(getSpan());
-        final List<AssemblyRegion> clippedRegions = new LinkedList<>();
-
-        for ( final GenomeLoc overlapping : allOverlapping ) {
-            clippedRegions.add(trim(overlapping, extension));
-        }
-
-        return clippedRegions;
+        return intervals.getOverlapping(getSpan()).stream()
+                .map(gl -> trim(gl, extension))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -182,7 +179,7 @@ public final class AssemblyRegion {
      * @return a non-null, empty active region
      */
     public AssemblyRegion trim(final GenomeLoc span, final int extensionSize) {
-        if ( span == null ) throw new IllegalArgumentException("Active region extent cannot be null");
+        Utils.nonNull(span, "Active region extent cannot be null");
         if ( extensionSize < 0) throw new IllegalArgumentException("the extensionSize size must be 0 or greater");
         final int extendStart = Math.max(1,span.getStart() - extensionSize);
         final int maxStop = genomeLocParser.getSequenceDictionary().getSequence(span.getContigIndex()).getSequenceLength();
@@ -226,8 +223,8 @@ public final class AssemblyRegion {
      * @return a non-null, empty active region
      */
     public AssemblyRegion trim(final GenomeLoc span, final GenomeLoc extendedSpan) {
-        if ( span == null ) throw new IllegalArgumentException("Active region extent cannot be null");
-        if ( extendedSpan == null ) throw new IllegalArgumentException("Active region extended span cannot be null");
+        Utils.nonNull(span, "Active region extent cannot be null");
+        Utils.nonNull(extendedSpan, "Active region extended span cannot be null");
         if ( ! extendedSpan.containsP(span)) {
             throw new IllegalArgumentException("The requested extended must fully contain the requested span");
         }
@@ -277,7 +274,7 @@ public final class AssemblyRegion {
      * @param read a non-null GATKSAMRecord
      */
     public void add( final SAMRecord read ) {
-        if ( read == null ) throw new IllegalArgumentException("Read cannot be null");
+        Utils.nonNull(read, "Read cannot be null");
 
         final GenomeLoc readLoc = genomeLocParser.createGenomeLoc( read );
         if ( ! readOverlapsRegion(read) ) {
@@ -335,10 +332,7 @@ public final class AssemblyRegion {
      * @param readsToAdd a collection of readsToAdd to add to this active region
      */
     public void addAll(final Collection<SAMRecord> readsToAdd){
-        if ( readsToAdd == null ) throw new IllegalArgumentException("readsToAdd cannot be null");
-        for ( final SAMRecord read : readsToAdd ) {
-            add(read);
-        }
+        Utils.nonNull(readsToAdd).forEach(r -> add(r));
     }
 
     /**
@@ -408,9 +402,9 @@ public final class AssemblyRegion {
      * @return a non-null array of bytes holding the reference bases in referenceReader
      */
     public byte[] getReference( final IndexedFastaSequenceFile referenceReader, final int padding, final GenomeLoc genomeLoc ) {
-        if ( referenceReader == null ) throw new IllegalArgumentException("referenceReader cannot be null");
+        Utils.nonNull(referenceReader, "referenceReader cannot be null");
+        Utils.nonNull(genomeLoc, "genomeLoc cannot be null");
         if ( padding < 0 ) throw new IllegalArgumentException("padding must be a positive integer but got " + padding);
-        if ( genomeLoc == null ) throw new IllegalArgumentException("genomeLoc cannot be null");
         if ( genomeLoc.size() == 0 ) throw new IllegalArgumentException("GenomeLoc must have size > 0 but got " + genomeLoc);
 
         return referenceReader.getSubsequenceAt( genomeLoc.getContig(),

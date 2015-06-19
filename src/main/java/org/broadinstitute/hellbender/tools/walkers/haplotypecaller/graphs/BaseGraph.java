@@ -417,14 +417,11 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      */
     public void removeSingletonOrphanVertices() {
         // Run through the graph and clean up singular orphaned nodes
-        final List<V> verticesToRemove = vertexSet().stream()
-                .filter(v -> inDegreeOf(v) == 0 && outDegreeOf(v) == 0 && !isRefSource(v))
-        for( final V v : vertexSet() ) {
-            if( inDegreeOf(v) == 0 && outDegreeOf(v) == 0 && !isRefSource(v) ) {
-                verticesToRemove.add(v);
-            }
-        }
-        removeAllVertices(verticesToRemove);
+        vertexSet().stream().filter(v -> isSingletonOrphan(v)).forEach(v -> removeVertex(v));
+    }
+
+    private boolean isSingletonOrphan(final V v) {
+        return inDegreeOf(v) == 0 && outDegreeOf(v) == 0 && !isRefSource(v);
     }
 
     /**

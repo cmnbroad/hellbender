@@ -122,8 +122,9 @@ public final class AssemblyResultSet {
                         originalByTrimmedHaplotypes.remove(trimmed);
                         originalByTrimmedHaplotypes.put(trimmed, h);
                     }
-                } else
-                    originalByTrimmedHaplotypes.put(trimmed,h);
+                } else {
+                    originalByTrimmedHaplotypes.put(trimmed, h);
+                }
             } else if (h.isReference()) {
                 throw new IllegalStateException("trimming eliminates the reference haplotype");
             } else if ( debug ) {
@@ -442,13 +443,6 @@ public final class AssemblyResultSet {
      */
     public boolean wasTrimmed() {
         return wasTrimmed;
-    }
-
-    /**
-     * Marks the assembly as not having variation even if it has more than one haplotype.
-     */
-    public void resetVariationPresent() {
-        variationPresent = false;
     }
 
     /**

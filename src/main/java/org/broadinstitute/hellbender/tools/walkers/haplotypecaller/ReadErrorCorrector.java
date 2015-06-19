@@ -5,7 +5,6 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
@@ -57,10 +56,10 @@ public final class ReadErrorCorrector {
     /**
      * A map of for each kmer to its num occurrences in addKmers
      */
-    KMerCounter countsByKMer;
+    private KMerCounter countsByKMer;
 
-    Map<Kmer,Kmer> kmerCorrectionMap = new HashMap<>();
-    Map<Kmer,Pair<int[],byte[]>> kmerDifferingBases = new HashMap<>();
+    private Map<Kmer,Kmer> kmerCorrectionMap = new HashMap<>();
+    private Map<Kmer,Pair<int[],byte[]>> kmerDifferingBases = new HashMap<>();
     private final int kmerLength;
     private final boolean debug;
     private final boolean trimLowQualityBases;
@@ -72,13 +71,13 @@ public final class ReadErrorCorrector {
     private final int minObservationsForKmerToBeSolid;
 
     // default values, for debugging
-    private final static boolean doInplaceErrorCorrection = false;    // currently not used, since we want corrected reads to be used only for assembly
-    private final static int MAX_MISMATCHES_TO_CORRECT = 2;
-    private final static byte QUALITY_OF_CORRECTED_BASES = 30; // what's a reasonable value here?
-    private final static int MAX_OBSERVATIONS_FOR_KMER_TO_BE_CORRECTABLE = 1;
-    private final static boolean TRIM_LOW_QUAL_TAILS = false;
-    private final static boolean DONT_CORRECT_IN_LONG_HOMOPOLYMERS = false;
-    private final static int MAX_HOMOPOLYMER_THRESHOLD = 12;
+    private static final boolean doInplaceErrorCorrection = false;    // currently not used, since we want corrected reads to be used only for assembly
+    private static final int MAX_MISMATCHES_TO_CORRECT = 2;
+    private static final byte QUALITY_OF_CORRECTED_BASES = 30; // what's a reasonable value here?
+    private static final int MAX_OBSERVATIONS_FOR_KMER_TO_BE_CORRECTABLE = 1;
+    private static final boolean TRIM_LOW_QUAL_TAILS = false;
+    private static final boolean DONT_CORRECT_IN_LONG_HOMOPOLYMERS = false;
+    private static final int MAX_HOMOPOLYMER_THRESHOLD = 12;
 
     // debug counter structure
     private final ReadErrorCorrectionStats readErrorCorrectionStats = new ReadErrorCorrectionStats();
@@ -134,14 +133,14 @@ public final class ReadErrorCorrector {
     * Main entry routine to add all kmers in a read to the read map counter
     * @param read                        Read to add bases
     */
-    protected void addReadKmers(final SAMRecord read) {
-        if (DONT_CORRECT_IN_LONG_HOMOPOLYMERS && maxHomopolymerLengthInRegion > MAX_HOMOPOLYMER_THRESHOLD)
+    void addReadKmers(final SAMRecord read) {
+        if (DONT_CORRECT_IN_LONG_HOMOPOLYMERS && maxHomopolymerLengthInRegion > MAX_HOMOPOLYMER_THRESHOLD) {
             return;
+        }
 
         final byte[] readBases = read.getReadBases();
         for (int offset = 0; offset <= readBases.length-kmerLength; offset++ )  {
             countsByKMer.addKmer(new Kmer(readBases,offset,kmerLength),1);
-
         }
     }
 
@@ -149,21 +148,21 @@ public final class ReadErrorCorrector {
      * Correct a collection of reads based on stored k-mer counts
      * @param reads
      */
-    public final List<SAMRecord> correctReads(final Collection<SAMRecord> reads) {
+    public List<SAMRecord> correctReads(final Collection<SAMRecord> reads) {
 
         final List<SAMRecord> correctedReads = new ArrayList<>(reads.size());
         if (DONT_CORRECT_IN_LONG_HOMOPOLYMERS && maxHomopolymerLengthInRegion > MAX_HOMOPOLYMER_THRESHOLD) {
             // just copy reads into output and exit
             correctedReads.addAll(reads);
-        }
-        else {
+        } else {
             computeKmerCorrectionMap();
             for (final SAMRecord read: reads) {
                 final SAMRecord correctedRead = correctRead(read);
-                if (trimLowQualityBases)
+                if (trimLowQualityBases) {
                     correctedReads.add(ReadClipper.hardClipLowQualEnds(correctedRead, minTailQuality));
-                else
+                } else {
                     correctedReads.add(correctedRead);
+                }
             }
             if (debug) {
                 logger.info("Number of corrected bases:"+readErrorCorrectionStats.numBasesCorrected);
@@ -209,14 +208,8 @@ public final class ReadErrorCorrector {
                 inputRead.setReadBases(correctedBases);
                 inputRead.setBaseQualities(correctedQuals);
                 return inputRead;
-            }
-            else {
-                SAMRecord correctedRead = null;
-                try {
-                    correctedRead = (SAMRecord)inputRead.clone();
-                } catch (CloneNotSupportedException e) {
-                    throw new IllegalStateException(e);//this should never happen. HTSJDK's signature is bogus: https://github.com/samtools/htsjdk/issues/192
-                }
+            } else {
+                final SAMRecord correctedRead = ReadUtils.clone(inputRead);
 
                 //  do the actual correction
                 // todo - do we need to clone anything else from read?
@@ -226,8 +219,7 @@ public final class ReadErrorCorrector {
                 ReadUtils.setReadGroup(correctedRead, inputRead.getReadGroup());
                 return correctedRead;
             }
-        }
-        else {
+        } else {
             readErrorCorrectionStats.numReadsUncorrected++;
             return inputRead;
         }
@@ -272,12 +264,15 @@ public final class ReadErrorCorrector {
      * @param reads
      */
     public void addReadsToKmers(final Collection<SAMRecord> reads) {
-        for (final SAMRecord read: reads)
+        for (final SAMRecord read: reads) {
             addReadKmers(read);
+        }
 
-        if (debug)
-            for ( final KMerCounter.CountedKmer countedKmer: countsByKMer.getCountedKmers() )
+        if (debug) {
+            for (final KMerCounter.CountedKmer countedKmer : getCountedKmers()) {
                 logger.info(String.format("%s\t%d\n", countedKmer.kmer, countedKmer.count));
+            }
+        }
     }
 
 
@@ -290,16 +285,15 @@ public final class ReadErrorCorrector {
      *
      */
     private void computeKmerCorrectionMap() {
-        for (final KMerCounter.CountedKmer storedKmer : countsByKMer.getCountedKmers()) {
+        for (final KMerCounter.CountedKmer storedKmer : getCountedKmers()) {
             if (storedKmer.getCount() >= minObservationsForKmerToBeSolid) {
                 // this kmer is good: map to itself
                 kmerCorrectionMap.put(storedKmer.getKmer(),storedKmer.getKmer());
                 kmerDifferingBases.put(storedKmer.getKmer(),new MutablePair<>(new int[0],new byte[0])); // dummy empty array
                 readErrorCorrectionStats.numSolidKmers++;
-            }
-            else if (storedKmer.getCount() <= maxObservationsForKmerToBeCorrectable) {
+            } else if (storedKmer.getCount() <= maxObservationsForKmerToBeCorrectable) {
                 // loop now thru all other kmers to find nearest neighbor
-                final Pair<Kmer,Pair<int[],byte[]>> nearestNeighbor = findNearestNeighbor(storedKmer.getKmer(),countsByKMer,maxMismatchesToCorrect);
+                final Pair<Kmer,Pair<int[],byte[]>> nearestNeighbor = findNearestNeighbor(storedKmer.getKmer(), countsByKMer, maxMismatchesToCorrect);
 
                 // check if nearest neighbor lies in a close vicinity. If so, log the new bases and the correction map
                 if (nearestNeighbor != null) { // ok, found close neighbor
@@ -308,9 +302,9 @@ public final class ReadErrorCorrector {
                     readErrorCorrectionStats.numCorrectedKmers++;
 //                    if (debug)
 //                        logger.info("Original kmer:"+storedKmer + "\tCorrected kmer:"+nearestNeighbor.first+"\tDistance:"+dist);
-                }
-                else
+                } else {
                     readErrorCorrectionStats.numUncorrectableKmers++;
+                }
 
             }
          }
@@ -325,9 +319,9 @@ public final class ReadErrorCorrector {
      * @return                            Pair of values: closest K-mer in Hamming distance and list of differing bases.
      *                                      If no neighbor can be found up to given distance, returns null
      */
-    private Pair<Kmer,Pair<int[],byte[]>> findNearestNeighbor(final Kmer kmer,
-                                                             final KMerCounter  countsByKMer,
-                                                             final int maxDistance) {
+    private static Pair<Kmer,Pair<int[],byte[]>> findNearestNeighbor(final Kmer kmer,
+                                                                     final KMerCounter countsByKMer,
+                                                                     final int maxDistance) {
         int minimumDistance = Integer.MAX_VALUE;
         Kmer closestKmer = null;
 
@@ -339,12 +333,14 @@ public final class ReadErrorCorrector {
 
         for (final KMerCounter.CountedKmer candidateKmer : countsByKMer.getCountedKmers()) {
             // skip if candidate set includes test kmer
-            if (candidateKmer.getKmer().equals(kmer))
+            if (candidateKmer.getKmer().equals(kmer)) {
                 continue;
+            }
 
             final int hammingDistance  = kmer.getDifferingPositions(candidateKmer.getKmer(), maxDistance, differingIndeces, differingBases);
-            if (hammingDistance < 0) // can't compare kmer? skip
+            if (hammingDistance < 0){ // can't compare kmer? skip
                 continue;
+            }
 
             if (hammingDistance < minimumDistance)  {
                 minimumDistance = hammingDistance;
@@ -366,16 +362,20 @@ public final class ReadErrorCorrector {
         int leftRun = 1;
         int maxRun = 1;
         for ( int i = 1; i < fullReferenceWithPadding.length; i++) {
-            if ( fullReferenceWithPadding[i] == fullReferenceWithPadding[i-1] )
+            if ( fullReferenceWithPadding[i] == fullReferenceWithPadding[i-1] ) {
                 leftRun++;
-            else
+            } else {
                 leftRun = 1;
             }
-            if (leftRun > maxRun)
-                maxRun = leftRun;
-
-
+        }
+        if (leftRun > maxRun) {
+            maxRun = leftRun;
+        }
         return maxRun;
+    }
+
+    public Collection<KMerCounter.CountedKmer> getCountedKmers() {
+        return countsByKMer.getCountedKmers();
     }
 
     private static final class ReadErrorCorrectionStats {
@@ -400,9 +400,9 @@ public final class ReadErrorCorrector {
      * By default, only strict consensus is allowed right now.
      *
      */
-    protected static class CorrectionSet {
+    public static final class CorrectionSet {
         private final int size;
-        private ArrayList<List<Byte>> corrections;
+        private final List<List<Byte>> corrections;
 
         /**
          * Main class constructor.
@@ -411,8 +411,9 @@ public final class ReadErrorCorrector {
         public CorrectionSet(final int size) {
             this.size = size;
             corrections = new ArrayList<>(size);
-            for (int k=0; k < size; k++)
-                corrections.add(k,new ArrayList<>());
+            for (int k=0; k < size; k++) {
+                corrections.add(k, new ArrayList<>());
+            }
         }
 
         /**
@@ -421,10 +422,12 @@ public final class ReadErrorCorrector {
          * @param base                            base to be added to list of corrections at this offset
          */
         public void add(final int offset, final byte base) {
-            if (offset >= size || offset < 0)
+            if (offset >= size || offset < 0) {
                 throw new IllegalStateException("Bad entry into CorrectionSet: offset > size");
-            if (!BaseUtils.isRegularBase(base))
+            }
+            if (!BaseUtils.isRegularBase(base)) {
                 return; // no irregular base correction
+            }
 
             final List<Byte> storedBytes = corrections.get(offset);
             storedBytes.add(base);
@@ -436,8 +439,9 @@ public final class ReadErrorCorrector {
          * @return                                  List of bases representing possible corrections at this offset
          */
         public List<Byte> get(final int offset) {
-            if (offset >= size || offset < 0)
+            if (offset >= size || offset < 0) {
                 throw new IllegalArgumentException("Illegal call of CorrectionSet.get(): offset must be < size");
+            }
             return corrections.get(offset);
         }
 
@@ -448,26 +452,26 @@ public final class ReadErrorCorrector {
          * @return                                 Consensus base, or null if no consensus possible.
          */
         public Byte getConsensusCorrection(final int offset) {
-            if (offset >= size || offset < 0)
+            if (offset >= size || offset < 0) {
                 throw new IllegalArgumentException("Illegal call of CorrectionSet.getConsensusCorrection(): offset must be < size");
+            }
             final List<Byte> storedBytes = corrections.get(offset);
-            if (storedBytes.isEmpty())
+            if (storedBytes.isEmpty()) {
                 return null;
+            }
 
             // todo - is there a cheaper/nicer way to compare if all elements in list are identical??
             final byte lastBase = storedBytes.remove(storedBytes.size()-1);
             for (final Byte b: storedBytes) {
                 // strict correction rule: all bases must match
-                if (b != lastBase)
+                if (b != lastBase) {
                     return null;
+                }
             }
 
             // all bytes then are equal:
             return lastBase;
 
         }
-
-
-
     }
 }

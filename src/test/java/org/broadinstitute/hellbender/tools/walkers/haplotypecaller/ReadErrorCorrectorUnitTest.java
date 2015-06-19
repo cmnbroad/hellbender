@@ -80,8 +80,8 @@ public final class ReadErrorCorrectorUnitTest {
 
         // special trivial case: kmer length is equal to read length.
         // K-mer counter should hold then exactly one kmer
-        Assert.assertEquals(readErrorCorrector.countsByKMer.getCountedKmers().size(), 1);
-        for (final KMerCounter.CountedKmer kmer : readErrorCorrector.countsByKMer.getCountedKmers()) {
+        Assert.assertEquals(readErrorCorrector.getCountedKmers().size(), 1);
+        for (final KMerCounter.CountedKmer kmer : readErrorCorrector.getCountedKmers()) {
             Assert.assertTrue(Arrays.equals(kmer.getKmer().bases(), bases.getBytes()));
             Assert.assertEquals(kmer.getCount(), NUM_GOOD_READS);
         }
@@ -91,8 +91,8 @@ public final class ReadErrorCorrectorUnitTest {
         final int KMER_LENGTH = 10;
         readErrorCorrector = new ReadErrorCorrector(KMER_LENGTH,(byte)6,10, debug,refChunkHard.getBytes());
         readErrorCorrector.addReadsToKmers(finalizedReadList);
-        Assert.assertEquals(readErrorCorrector.countsByKMer.getCountedKmers().size(), 1);
-        for (final KMerCounter.CountedKmer kmer : readErrorCorrector.countsByKMer.getCountedKmers()) {
+        Assert.assertEquals(readErrorCorrector.getCountedKmers().size(), 1);
+        for (final KMerCounter.CountedKmer kmer : readErrorCorrector.getCountedKmers()) {
             Assert.assertEquals(kmer.getCount(), NUM_GOOD_READS * (READ_LENGTH - KMER_LENGTH + 1));
         }
 

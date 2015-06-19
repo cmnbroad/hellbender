@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs.SeqGraph;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.readthreading.ReadThreadingGraph;
+import org.broadinstitute.hellbender.utils.Utils;
 
 /**
  * Result of assembling, with the resulting graph and status
@@ -17,7 +18,7 @@ public final class AssemblyResult {
      * @param graph the resulting graph of the assembly, can only be null if result is failed
      */
     public AssemblyResult(final Status status, final SeqGraph graph, final ReadThreadingGraph threadingGraph) {
-        if ( status == null ) throw new IllegalArgumentException("status cannot be null");
+        Utils.nonNull(status, "status cannot be null");
         if ( status != Status.FAILED && graph == null ) throw new IllegalArgumentException("graph is null but status is " + status);
 
         this.status = status;

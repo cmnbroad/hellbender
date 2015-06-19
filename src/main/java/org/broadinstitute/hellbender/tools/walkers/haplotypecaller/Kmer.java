@@ -54,7 +54,7 @@ public final class Kmer {
      * @param length the length of the kmer.  Must be >= 0 and start + length < bases.length
      */
     public Kmer(final byte[] bases, final int start, final int length) {
-        if ( bases == null ) throw new IllegalArgumentException("bases cannot be null");
+        Utils.nonNull(bases, "bases cannot be null");
         if ( start < 0 ) throw new IllegalArgumentException("start must be >= 0 but got " + start);
         if ( length < 0 ) throw new IllegalArgumentException("length must be >= 0 but got " + length);
         if ( (start + length) > bases.length ) throw new IllegalArgumentException("start + length " + (start + length) + " must be <= bases.length " + bases.length + " but got " + start + " with length " + length);
