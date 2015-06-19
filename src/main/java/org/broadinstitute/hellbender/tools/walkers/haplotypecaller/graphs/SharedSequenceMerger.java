@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -15,7 +16,7 @@ import java.util.Set;
  * as appropriate
  */
 public final class SharedSequenceMerger {
-    public SharedSequenceMerger() { }
+    private SharedSequenceMerger() { }
 
     /**
      * Attempt to merge the incoming vertices of v
@@ -24,8 +25,8 @@ public final class SharedSequenceMerger {
      * @param v the vertex whose incoming vertices we want to merge
      * @return true if some useful merging was done, false otherwise
      */
-    public boolean merge(final SeqGraph graph, final SeqVertex v) {
-        if ( graph == null ) throw new IllegalArgumentException("graph cannot be null");
+    public static boolean merge(final SeqGraph graph, final SeqVertex v) {
+        Utils.nonNull(graph, "graph cannot be null");
         if ( ! graph.vertexSet().contains(v) ) throw new IllegalArgumentException("graph doesn't contain vertex " + v);
 
         final Set<SeqVertex> prevs = graph.incomingVerticesOf(v);
@@ -60,8 +61,6 @@ public final class SharedSequenceMerger {
         }
     }
 
-    //private static int counter = 0;
-
     /**
      * Can we safely merge the incoming vertices of v
      *
@@ -70,7 +69,7 @@ public final class SharedSequenceMerger {
      * @param incomingVertices the incoming vertices of v
      * @return true if we can safely merge incomingVertices
      */
-    private boolean canMerge(final SeqGraph graph, final SeqVertex v, final Collection<SeqVertex> incomingVertices) {
+    private static boolean canMerge(final SeqGraph graph, final SeqVertex v, final Collection<SeqVertex> incomingVertices) {
         if ( incomingVertices.isEmpty() )
             return false;
 

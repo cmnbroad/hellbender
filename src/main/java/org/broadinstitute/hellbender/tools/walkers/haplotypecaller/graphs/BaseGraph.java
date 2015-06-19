@@ -417,7 +417,9 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
      */
     public void removeSingletonOrphanVertices() {
         // Run through the graph and clean up singular orphaned nodes
-        vertexSet().stream().filter(v -> isSingletonOrphan(v)).forEach(v -> removeVertex(v));
+        //Note: need to collect nodes to remove first because we can't directly modify the list we're iterating over
+        final List<V> toRemove = vertexSet().stream().filter(v -> isSingletonOrphan(v)).collect(Collectors.toList());
+        removeAllVertices(toRemove);
     }
 
     private boolean isSingletonOrphan(final V v) {
@@ -690,8 +692,8 @@ public abstract class BaseGraph<V extends BaseVertex, E extends BaseEdge> extend
          */
         public BaseGraphIterator(final BaseGraph<T,E> graph, final T start,
                                  final boolean followIncomingEdges, final boolean followOutgoingEdges) {
-            if ( graph == null ) throw new IllegalArgumentException("graph cannot be null");
-            if ( start == null ) throw new IllegalArgumentException("start cannot be null");
+            Utils.nonNull(graph, "graph cannot be null");
+            Utils.nonNull(start, "start cannot be null");
             if ( ! graph.containsVertex(start) ) throw new IllegalArgumentException("start " + start + " must be in graph but it isn't");
             this.graph = graph;
             this.followIncomingEdges = followIncomingEdges;

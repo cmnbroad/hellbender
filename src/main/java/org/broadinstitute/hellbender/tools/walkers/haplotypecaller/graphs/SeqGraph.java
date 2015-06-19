@@ -409,7 +409,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
     protected class MergeCommonSuffices extends VertexBasedTransformer {
         @Override
         boolean tryToTransform(final SeqVertex bottom) {
-            return new SharedSequenceMerger().merge(SeqGraph.this, bottom);
+            return SharedSequenceMerger.merge(SeqGraph.this, bottom);
         }
     }
 

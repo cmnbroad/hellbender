@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import htsjdk.samtools.Cigar;
 import org.apache.commons.lang3.ArrayUtils;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
 
 import java.util.*;
@@ -32,8 +33,8 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * @param graph the graph this path will follow through
      */
     public Path(final T initialVertex, final BaseGraph<T, E> graph) {
-        if ( initialVertex == null ) throw new IllegalArgumentException("initialVertex cannot be null");
-        if ( graph == null ) throw new IllegalArgumentException("graph cannot be null");
+        Utils.nonNull(initialVertex, "initialVertex cannot be null");
+        Utils.nonNull(graph, "graph cannot be null");
         if ( ! graph.containsVertex(initialVertex) ) throw new IllegalArgumentException("Vertex " + initialVertex + " must be part of graph " + graph);
 
         lastVertex = initialVertex;
@@ -52,8 +53,8 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * not part of {@code p}'s graph, or {@code edge} does not have as a source the last vertex in {@code p}.
      */
     public Path(final Path<T,E> p, final E edge) {
-        if ( p == null ) throw new IllegalArgumentException("Path cannot be null");
-        if ( edge == null ) throw new IllegalArgumentException("Edge cannot be null");
+        Utils.nonNull(p, "Path cannot be null");
+        Utils.nonNull(edge, "Edge cannot be null");
         if ( ! p.graph.containsEdge(edge) ) throw new IllegalArgumentException("Graph must contain edge " + edge + " but it doesn't");
         if ( ! p.graph.getEdgeSource(edge).equals(p.lastVertex) ) { throw new IllegalStateException("Edges added to path must be contiguous."); }
 
@@ -84,8 +85,8 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * not part of {@code p}'s graph, or {@code edge} does not have as a target the first vertex in {@code p}.
      */
     public Path(final E edge, final Path<T,E> p) {
-        if ( p == null ) throw new IllegalArgumentException("Path cannot be null");
-        if ( edge == null ) throw new IllegalArgumentException("Edge cannot be null");
+        Utils.nonNull(p, "Path cannot be null");
+        Utils.nonNull(edge, "Edge cannot be null");
         if ( ! p.graph.containsEdge(edge) ) throw new IllegalArgumentException("Graph must contain edge " + edge + " but it doesn't");
         if ( ! p.graph.getEdgeTarget(edge).equals(p.getFirstVertex())) { throw new IllegalStateException("Edges added to path must be contiguous."); }
         graph = p.graph;
@@ -96,7 +97,7 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
         totalScore = p.totalScore + edge.getMultiplicity();
     }
 
-/**
+    /**
      * Check that two paths have the same edges and total score
      * @param path the other path we might be the same as
      * @return true if this and path are the same
@@ -112,7 +113,7 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * @return true if v occurs within this path, false otherwise
      */
     public boolean containsVertex(final T v) {
-        if ( v == null ) throw new IllegalArgumentException("Vertex cannot be null");
+        Utils.nonNull(v, "Vertex cannot be null");
 
         // TODO -- warning this is expensive.  Need to do vertex caching
         return getVertices().contains(v);
@@ -123,10 +124,11 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
         final StringBuilder b = new StringBuilder("Path{score=" + totalScore + ", path=");
         boolean first = true;
         for ( final T v : getVertices() ) {
-            if ( first )
+            if ( first ) {
                 first = false;
-            else
+            } else {
                 b.append(" -> ");
+            }
             b.append(v.getSequenceString());
         }
         b.append('}');
@@ -152,9 +154,9 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * @return a non-null, non-empty list of vertices
      */
     public List<T> getVertices() {
-        if ( getEdges().isEmpty() )
+        if ( getEdges().isEmpty() ) {
             return Collections.singletonList(lastVertex);
-        else {
+        } else {
             final LinkedList<T> vertices = new LinkedList<>();
             boolean first = true;
             for ( final E e : getEdges() ) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.Collections;
 import java.util.Set;
@@ -61,7 +62,7 @@ final class DeadEndKBestSubHaplotypeFinder implements KBestSubHaplotypeFinder {
 
     @Override
     public double score(final byte[] bases, final int offset, final int length) {
-        if (bases == null) throw new IllegalArgumentException("bases cannot be null");
+        Utils.nonNull(bases, "bases cannot be null");
         if (offset < 0) throw new IllegalArgumentException("the offset cannot be negative");
         if (length < 0) throw new IllegalArgumentException("the length cannot be negative");
         if (offset + length > bases.length) throw new IllegalArgumentException("the offset and length go beyond the array size");

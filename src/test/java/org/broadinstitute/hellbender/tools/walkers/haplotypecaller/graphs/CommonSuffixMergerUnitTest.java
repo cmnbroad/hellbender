@@ -144,8 +144,7 @@ public class CommonSuffixMergerUnitTest extends BaseTest {
     @Test(dataProvider = "CompleteCycleData")
     public void testMerging(final SplitMergeData data) {
         final SeqGraph original = (SeqGraph)data.graph.clone();
-        final SharedSequenceMerger splitter = new SharedSequenceMerger();
-        splitter.merge(data.graph, data.v);
+        SharedSequenceMerger.merge(data.graph, data.v);
         assertSameHaplotypes(String.format("suffixMerge.%s.%d", data.commonSuffix, data.graph.vertexSet().size()), data.graph, original);
     }
 
@@ -161,7 +160,6 @@ public class CommonSuffixMergerUnitTest extends BaseTest {
         g.addEdges(top, v1, b);
         g.addEdges(v2, b); // v2 doesn't have previous node, cannot be merged
         g.addEdges(top, v3, b);
-        final SharedSequenceMerger merger = new SharedSequenceMerger();
-        Assert.assertFalse(merger.merge(g, b), "Shouldn't be able to merge shared vertices, when one is a source");
+        Assert.assertFalse(SharedSequenceMerger.merge(g, b), "Shouldn't be able to merge shared vertices, when one is a source");
     }
 }

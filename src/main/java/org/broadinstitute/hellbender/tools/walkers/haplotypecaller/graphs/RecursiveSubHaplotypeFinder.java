@@ -60,24 +60,28 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
      */
     private static Collection<EdgeSubHaplotypeFinder> createChildFinderCollection(final SeqVertex vertex,
                                                              final Map<BaseEdge,KBestSubHaplotypeFinder> finders) {
-        if (finders == null) throw new IllegalArgumentException("the edge to child map cannot be null");
-        final ArrayList<EdgeSubHaplotypeFinder> result = new ArrayList<>(finders.size());
-        for (final Map.Entry<BaseEdge,KBestSubHaplotypeFinder> e : finders.entrySet()) {
-            final EdgeSubHaplotypeFinder subFinder = new EdgeSubHaplotypeFinder(vertex,e.getKey(), e.getValue());
-            if (subFinder.getCount() == 0) continue;
+        Utils.nonNull(finders, "the edge to child map cannot be null");
+        final List<EdgeSubHaplotypeFinder> result = new ArrayList<>(finders.size());
+        for (final Map.Entry<BaseEdge, KBestSubHaplotypeFinder> e : finders.entrySet()) {
+            final EdgeSubHaplotypeFinder subFinder = new EdgeSubHaplotypeFinder(vertex, e.getKey(), e.getValue());
+            if (subFinder.getCount() == 0) {
+                continue;
+            }
             result.add(subFinder);
         }
-        if (result.size() == 0)
+        if (result.size() == 0){
             return Collections.emptySet();
-        else if (result.size() == 1) // no calibration needed, by default edgeScore is 0.
+        } else if (result.size() == 1) { // no calibration needed, by default edgeScore is 0.
             return Collections.singleton(result.get(0));
-        else {
+        } else {
             double totalEdgeMultiplicityAcrossEdges = 0;
-            for (final EdgeSubHaplotypeFinder finder : result)
+            for (final EdgeSubHaplotypeFinder finder : result) {
                 totalEdgeMultiplicityAcrossEdges += Math.max(0.5, finder.edge.getMultiplicity());
+            }
             final double log10TotalEdgeMultiplicityAcrossEdges = Math.log10(totalEdgeMultiplicityAcrossEdges);
-            for (final EdgeSubHaplotypeFinder finder : result)
+            for (final EdgeSubHaplotypeFinder finder : result) {
                 finder.calibrateEdgeScore(log10TotalEdgeMultiplicityAcrossEdges);
+            }
             return result;
         }
     }
@@ -106,12 +110,14 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
      * @param edgeLabel the original label to reformat.
      * @return never {@code null}, the reformatted label.
      */
-    private String simplifyZeros(final String edgeLabel) {
-        if (edgeLabel.equals("0.000") || edgeLabel.equals("-0.000") )
+    private static String simplifyZeros(final String edgeLabel) {
+        if (edgeLabel.equals("0.000") || edgeLabel.equals("-0.000") ) {
             return "0.";
+        }
         int i = edgeLabel.length() - 1;
-        while (edgeLabel.charAt(i) == '0')
+        while (edgeLabel.charAt(i) == '0') {
             i--;
+        }
         return (i == edgeLabel.length() - 1) ? edgeLabel : edgeLabel.substring(0,i);
     }
 
@@ -168,21 +174,23 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
 
         @Override
         public double score(final byte[] bases, final int offset, final int length) {
-            if (length == 0)
+            if (length == 0) {
                 return 0;
+            }
             final byte[] vertexSequence = vertex.getSequence();
-            if (length < vertexSequence.length) // query is not long enough to have any score.
+            if (length < vertexSequence.length){ // query is not long enough to have any score.
                 return Double.NaN;
-            else if (!Utils.equalRange(vertexSequence, 0, bases, offset, vertexSequence.length))
+            } else if (!Utils.equalRange(vertexSequence, 0, bases, offset, vertexSequence.length)) {
                 return Double.NaN;
-            else
-                return edgeScore + childFinder.score(bases,offset + vertexSequence.length,length - vertexSequence.length);
+            } else {
+                return edgeScore + childFinder.score(bases, offset + vertexSequence.length, length - vertexSequence.length);
+            }
         }
     }
 
     @Override
     public String id() {
-        return "v" + vertex.getId();
+        return "v" + Integer.valueOf(vertex.getId());
     }
 
     /**
@@ -194,7 +202,7 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
      *     source vertex.
      * </p>
      */
-    private static class ChildKBestSubHaplotype extends KBestHaplotype {
+    private static final class ChildKBestSubHaplotype extends KBestHaplotype {
 
         private final double score;
         private final KBestHaplotype child;

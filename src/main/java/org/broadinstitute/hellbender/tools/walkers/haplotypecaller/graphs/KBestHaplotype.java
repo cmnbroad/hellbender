@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 
 /**
@@ -107,9 +108,10 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
      * @return {@code -1} if the current score is larger than {@code other}'s, {@code 0} if they are the same, {@code 1}
      * if {@code other}'s score is larger.
      */
+    @Override
     public int compareTo(final KBestHaplotype other) {
-        if (other == null) throw new IllegalArgumentException("the other object cannot be null");
-        return - Double.compare(score(), other.score());
+        Utils.nonNull(other, "the other object cannot be null");
+        return -1 * Double.compare(score(), other.score());
     }
 
     @Override

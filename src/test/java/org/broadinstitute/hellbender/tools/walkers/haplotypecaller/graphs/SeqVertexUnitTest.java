@@ -10,26 +10,13 @@ import java.util.List;
 
 public final class SeqVertexUnitTest extends BaseTest {
     @Test
-    public void testBasic() {
-        final byte[] bases = "ACT".getBytes();
-        final SeqVertex v1 = new SeqVertex(bases);
-        final SeqVertex v2 = new SeqVertex(bases);
-        Assert.assertTrue(v1.getId() >= 0);
-        Assert.assertTrue(v2.getId() >= 0);
-        Assert.assertTrue(v2.getId() > v1.getId());
-    }
-
-    @Test
     public void testEqualsAndHashCode() {
         final byte[] bases = "ACT".getBytes();
         final SeqVertex v1 = new SeqVertex(bases);
         final SeqVertex v1_neq = new SeqVertex(bases);
-        final SeqVertex v1_eq = new SeqVertex(v1);
 
         Assert.assertEquals(v1, v1);
         Assert.assertEquals(v1.hashCode(), v1.hashCode());
-        Assert.assertEquals(v1, v1_eq);
-        Assert.assertEquals(v1.hashCode(), v1_eq.hashCode());
         Assert.assertFalse(v1.equals(v1_neq));
         Assert.assertFalse(v1_neq.equals(v1));
         Assert.assertFalse(v1_neq.hashCode() == v1.hashCode());

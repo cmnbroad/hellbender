@@ -330,8 +330,7 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> {
      * @throws IllegalArgumentException if {@code out} is {@code null}.
      */
     public void printDOT(final PrintWriter out) {
-        if (out == null)
-            throw new IllegalArgumentException("the out writer cannot be null");
+        Utils.nonNull(out, "the out writer cannot be null");
         out.println("digraph {");
         out.println("    rankdir = LR");
         out.println("    node [shape=box, margin=0.01]");
@@ -372,13 +371,12 @@ public final class KBestHaplotypeFinder extends AbstractList<KBestHaplotype> {
      * @throws IllegalStateException if there was some trouble when writing the DOT representation.
      */
     public void printDOT(final File file) throws FileNotFoundException {
-        if (file == null)
-            throw new IllegalArgumentException("the output file cannot be null");
+        Utils.nonNull(file, "the output file cannot be null");
         final PrintWriter out = new PrintWriter(file);
         printDOT(out);
         if (out.checkError()) {
             throw new IllegalStateException("error occurred while writing k-best haplotype search graph into file '"
-                    + file.getAbsolutePath() + "'");
+                    + file.getAbsolutePath() + '\'');
         }
         out.close();
     }

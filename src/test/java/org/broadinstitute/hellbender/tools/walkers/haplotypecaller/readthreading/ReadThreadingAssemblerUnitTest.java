@@ -27,7 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-public class ReadThreadingAssemblerUnitTest extends BaseTest {
+public final class ReadThreadingAssemblerUnitTest extends BaseTest {
 
     private final static boolean DEBUG = false;
 

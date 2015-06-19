@@ -56,13 +56,13 @@ public class BaseVertex {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         BaseVertex that = (BaseVertex) o;
 
-        return Arrays.equals(sequence, that.sequence);
+        return seqEquals(that);
     }
 
     /**
@@ -131,7 +131,7 @@ public class BaseVertex {
      * @param info the new info value.
      */
     public void setAdditionalInfo(final String info) {
-        if ( info == null ) throw new IllegalArgumentException("info cannot be null");
+        Utils.nonNull(info, "info cannot be null");
         additionalInfo = info;
     }
 

@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-public class AssemblyRegionTestDataSetUnitTest extends BaseTest {
+public final class AssemblyRegionTestDataSetUnitTest extends BaseTest {
 
     @Test(dataProvider="activeRegionTestDataSets")
     public void testAssemblyRegionsDataSet(final AssemblyRegionTestDataSet as, final int kmerSize, final int readLength, final String variation, final int readCount, final int regionSize, final byte bq, final byte iq, final byte dq) {

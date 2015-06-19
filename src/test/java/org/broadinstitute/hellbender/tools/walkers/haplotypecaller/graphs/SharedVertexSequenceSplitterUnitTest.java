@@ -96,18 +96,18 @@ public class SharedVertexSequenceSplitterUnitTest extends BaseTest {
         final SharedVertexSequenceSplitter splitter = new SharedVertexSequenceSplitter(graph, v);
         splitter.split();
 
-        Assert.assertEquals(splitter.prefixV.getSequenceString(), expectedPrefix);
-        Assert.assertEquals(splitter.suffixV.getSequenceString(), expectedSuffix);
+        Assert.assertEquals(splitter.getPrefixV().getSequenceString(), expectedPrefix);
+        Assert.assertEquals(splitter.getSuffixV().getSequenceString(), expectedSuffix);
 
-        Assert.assertTrue(splitter.splitGraph.outDegreeOf(splitter.prefixV) <= strings.size());
-        Assert.assertEquals(splitter.splitGraph.inDegreeOf(splitter.prefixV), 0);
+        Assert.assertTrue(splitter.getSplitGraph().outDegreeOf(splitter.getPrefixV()) <= strings.size());
+        Assert.assertEquals(splitter.getSplitGraph().inDegreeOf(splitter.getPrefixV()), 0);
 
-        Assert.assertTrue(splitter.splitGraph.inDegreeOf(splitter.suffixV) <= strings.size());
-        Assert.assertEquals(splitter.splitGraph.outDegreeOf(splitter.suffixV), 0);
+        Assert.assertTrue(splitter.getSplitGraph().inDegreeOf(splitter.getSuffixV()) <= strings.size());
+        Assert.assertEquals(splitter.getSplitGraph().outDegreeOf(splitter.getSuffixV()), 0);
 
-        for ( final SeqVertex mid : splitter.newMiddles ) {
-            Assert.assertNotNull(splitter.splitGraph.getEdge(splitter.prefixV, mid));
-            Assert.assertNotNull(splitter.splitGraph.getEdge(mid, splitter.suffixV));
+        for ( final SeqVertex mid : splitter.getNewMiddles()) {
+            Assert.assertNotNull(splitter.getSplitGraph().getEdge(splitter.getPrefixV(), mid));
+            Assert.assertNotNull(splitter.getSplitGraph().getEdge(mid, splitter.getSuffixV()));
         }
     }
 
@@ -189,7 +189,7 @@ public class SharedVertexSequenceSplitterUnitTest extends BaseTest {
         final SharedVertexSequenceSplitter splitter = new SharedVertexSequenceSplitter(graph, v);
         splitter.split();
         if ( PRINT_GRAPHS ) graph.printGraph(new File(Utils.join("_", strings) + "_" + hasTop + "_" + hasBot + ".original.dot"), 0);
-        if ( PRINT_GRAPHS ) splitter.splitGraph.printGraph(new File(Utils.join("_", strings) + "_" + hasTop + "_" + hasBot + ".split.dot"), 0);
+        if ( PRINT_GRAPHS ) splitter.getSplitGraph().printGraph(new File(Utils.join("_", strings) + "_" + hasTop + "_" + hasBot + ".split.dot"), 0);
         splitter.updateGraph(top, bot);
         if ( PRINT_GRAPHS ) graph.printGraph(new File(Utils.join("_", strings) + "_" + hasTop + "_" + hasBot + ".updated.dot"), 0);
 
@@ -244,7 +244,7 @@ public class SharedVertexSequenceSplitterUnitTest extends BaseTest {
     public Object[][] makeMeetsMinSequenceData() {
         final List<Object[]> tests = new ArrayList<>();
 
-        final boolean prefixBiased = SharedVertexSequenceSplitter.prefersPrefixMerging();
+        final boolean prefixBiased = true;
         tests.add(new Object[]{Arrays.asList("AC", "AC"), 0, true, true});
         tests.add(new Object[]{Arrays.asList("AC", "AC"), 1, prefixBiased, ! prefixBiased});
         tests.add(new Object[]{Arrays.asList("AC", "AC"), 2, prefixBiased, ! prefixBiased});

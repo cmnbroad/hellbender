@@ -407,7 +407,7 @@ public final class ReadThreadingAssembler {
             return new AssemblyResult(AssemblyResult.Status.FAILED, null, null);
         }
 
-        if ( !allowNonUniqueKmersInRef && !ReadThreadingGraph.determineNonUniqueKmers(new SequenceForKmers("ref", refHaplotype.getBases(), 0, refHaplotype.getBases().length, 1, true), kmerSize).isEmpty() ) {
+        if ( !allowNonUniqueKmersInRef && !ReadThreadingGraph.determineNonUniqueKmers(new ReadThreadingGraph.SequenceForKmers("ref", refHaplotype.getBases(), 0, refHaplotype.getBases().length, 1, true), kmerSize).isEmpty() ) {
             if ( debug ) logger.info("Not using kmer size of " + kmerSize + " in read threading assembler because reference contains non-unique kmers");
             return null;
         }

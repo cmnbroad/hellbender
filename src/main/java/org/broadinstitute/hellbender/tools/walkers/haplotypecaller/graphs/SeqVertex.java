@@ -22,10 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 public final class SeqVertex extends BaseVertex {
-    // Note that using an AtomicInteger is critical to allow multi-threaded HaplotypeCaller
-    private static final AtomicInteger idCounter = new AtomicInteger(0);
-    private int id = idCounter.getAndIncrement();
-
     /**
      * Create a new SeqVertex with sequence and the next available id
      * @param sequence our base sequence
@@ -43,25 +39,16 @@ public final class SeqVertex extends BaseVertex {
     }
 
     /**
-     * Create a copy of toCopy
-     * @param toCopy a SeqVertex to copy into this newly allocated one
-     */
-    public SeqVertex(final SeqVertex toCopy) {
-        super(toCopy.sequence);
-        this.id = toCopy.id;
-    }
-
-    /**
      * Get the unique ID for this SeqVertex
      * @return a positive integer >= 0
      */
     public int getId() {
-        return id;
+        return hashCode();
     }
 
     @Override
     public String toString() {
-        return "SeqVertex_id_" + id + "_seq_" + getSequenceString();
+        return "SeqVertex_id_" + hashCode() + "_seq_" + getSequenceString();
     }
 
     /**
@@ -70,22 +57,11 @@ public final class SeqVertex extends BaseVertex {
      * @return
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        SeqVertex seqVertex = (SeqVertex) o;
-        if (id != seqVertex.id) return false;
-
-        // note that we don't test for super equality here because the ids are unique
-        //if (!super.equals(o)) return false;
-
-        return true;
-    }
+    public boolean equals(final Object o) { return o == this; };
 
     @Override
     public int hashCode() {
-        return id;
+        return System.identityHashCode(this);
     }
 
     /**

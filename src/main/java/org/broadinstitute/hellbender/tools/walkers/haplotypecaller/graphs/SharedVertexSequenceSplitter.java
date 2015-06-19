@@ -1,7 +1,9 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.*;
 
@@ -50,14 +52,15 @@ import java.util.*;
  * to update the graph with the modifications created by this splitter
  */
 public final class SharedVertexSequenceSplitter {
-    final private SeqGraph outer;
-    final protected SeqVertex prefixV, suffixV;
-    final protected Collection<SeqVertex> toSplits;
+    private final SeqGraph outer;
+    private final SeqVertex prefixV;
+    private final SeqVertex suffixV;
+    private final Collection<SeqVertex> toSplits;
 
     // updated in split routine
-    protected SeqGraph splitGraph = null;
-    protected Collection<SeqVertex> newMiddles = null;
-    protected List<BaseEdge> edgesToRemove = null;
+    private SeqGraph splitGraph = null;
+    private Collection<SeqVertex> newMiddles = null;
+    private List<BaseEdge> edgesToRemove = null;
 
     /**
      * Create a new graph that contains the vertices in toSplitsArg with their shared suffix and prefix
@@ -68,8 +71,8 @@ public final class SharedVertexSequenceSplitter {
      *                    from a single shared top and/or bottom node
      */
     public SharedVertexSequenceSplitter(final SeqGraph graph, final Collection<SeqVertex> toSplitsArg) {
-        if ( graph == null ) throw new IllegalArgumentException("graph cannot be null");
-        if ( toSplitsArg == null ) throw new IllegalArgumentException("toSplitsArg cannot be null");
+        Utils.nonNull(graph, "graph cannot be null");
+        Utils.nonNull(toSplitsArg, "toSplitsArg cannot be null");
         if ( toSplitsArg.size() < 2 ) throw new IllegalArgumentException("Can only split at least 2 vertices but only got " + toSplitsArg);
         if ( ! graph.vertexSet().containsAll(toSplitsArg) ) throw new IllegalArgumentException("graph doesn't contain all of the vertices to split");
 
@@ -80,14 +83,6 @@ public final class SharedVertexSequenceSplitter {
         final Pair<SeqVertex, SeqVertex> prefixAndSuffix = commonPrefixAndSuffixOfVertices(toSplits);
         prefixV = prefixAndSuffix.getLeft();
         suffixV = prefixAndSuffix.getRight();
-    }
-
-    /**
-     * Given sequencing that are all equal, does this splitter make those into prefix or suffix nodes?
-     * @return true if we merge equal nodes into prefix nodes or suffix nodes
-     */
-    protected static boolean prefersPrefixMerging() {
-        return true;
     }
 
     /**
@@ -120,7 +115,7 @@ public final class SharedVertexSequenceSplitter {
      * @return true if prefix length >= minCommonSequence
      */
     public boolean meetsMinMergableSequenceForPrefix(final int minCommonSequence) {
-        return prefixV.length() >= minCommonSequence;
+        return getPrefixV().length() >= minCommonSequence;
     }
 
     /**
@@ -129,7 +124,7 @@ public final class SharedVertexSequenceSplitter {
      * @return true if suffix length >= minCommonSequence
      */
     public boolean meetsMinMergableSequenceForSuffix(final int minCommonSequence) {
-        return suffixV.length() >= minCommonSequence;
+        return getSuffixV().length() >= minCommonSequence;
     }
 
     /**
@@ -142,23 +137,23 @@ public final class SharedVertexSequenceSplitter {
         newMiddles = new LinkedList<>();
         edgesToRemove = new LinkedList<>();
 
-        splitGraph.addVertices(prefixV, suffixV);
+        getSplitGraph().addVertices(getPrefixV(), getSuffixV());
 
         for ( final SeqVertex mid : toSplits ) {
             final BaseEdge toMid = processEdgeToRemove(mid, outer.incomingEdgeOf(mid));
             final BaseEdge fromMid = processEdgeToRemove(mid, outer.outgoingEdgeOf(mid));
 
-            final SeqVertex remaining = mid.withoutPrefixAndSuffix(prefixV.getSequence(), suffixV.getSequence());
+            final SeqVertex remaining = mid.withoutPrefixAndSuffix(getPrefixV().getSequence(), getSuffixV().getSequence());
             if ( remaining != null ) {
                 // there's some sequence prefix + seq + suffix, so add the node and make edges
-                splitGraph.addVertex(remaining);
-                newMiddles.add(remaining);
+                getSplitGraph().addVertex(remaining);
+                getNewMiddles().add(remaining);
                 // update edge from top -> middle to be top -> without suffix
-                splitGraph.addEdge(prefixV, remaining, toMid);
-                splitGraph.addEdge(remaining, suffixV, fromMid);
+                getSplitGraph().addEdge(getPrefixV(), remaining, toMid);
+                getSplitGraph().addEdge(remaining, getSuffixV(), fromMid);
             } else {
                 // prefix + suffix completely explain this node
-                splitGraph.addOrUpdateEdge(prefixV, suffixV, toMid.copy().add(fromMid));
+                getSplitGraph().addOrUpdateEdge(getPrefixV(), getSuffixV(), toMid.copy().add(fromMid));
             }
         }
     }
@@ -178,37 +173,41 @@ public final class SharedVertexSequenceSplitter {
         if ( top == null && bot == null ) throw new IllegalArgumentException("Cannot update graph without at least one top or bot vertex, but both were null");
         if ( top != null && ! outer.containsVertex(top) ) throw new IllegalArgumentException("top " + top + " not found in graph " + outer);
         if ( bot != null && ! outer.containsVertex(bot) ) throw new IllegalArgumentException("bot " + bot + " not found in graph " + outer);
-        if ( splitGraph == null ) throw new IllegalStateException("Cannot call updateGraph until split() has been called");
+        if ( getSplitGraph() == null ) throw new IllegalStateException("Cannot call updateGraph until split() has been called");
 
         outer.removeAllVertices(toSplits);
         outer.removeAllEdges(edgesToRemove);
 
-        outer.addVertices(newMiddles);
+        outer.addVertices(getNewMiddles());
 
-        final boolean hasPrefixSuffixEdge = splitGraph.getEdge(prefixV, suffixV) != null;
-        final boolean hasOnlyPrefixSuffixEdges = hasPrefixSuffixEdge && splitGraph.outDegreeOf(prefixV) == 1;
-        final boolean needPrefixNode = ! prefixV.isEmpty() || (top == null && ! hasOnlyPrefixSuffixEdges);
-        final boolean needSuffixNode = ! suffixV.isEmpty() || (bot == null && ! hasOnlyPrefixSuffixEdges);
+        final boolean hasPrefixSuffixEdge = getSplitGraph().getEdge(getPrefixV(), getSuffixV()) != null;
+        final boolean hasOnlyPrefixSuffixEdges = hasPrefixSuffixEdge && getSplitGraph().outDegreeOf(getPrefixV()) == 1;
+        final boolean needPrefixNode = ! getPrefixV().isEmpty() || (top == null && ! hasOnlyPrefixSuffixEdges);
+        final boolean needSuffixNode = ! getSuffixV().isEmpty() || (bot == null && ! hasOnlyPrefixSuffixEdges);
 
         // if prefix / suffix are needed, keep them
-        final SeqVertex topForConnect = needPrefixNode ? prefixV : top;
-        final SeqVertex botForConnect = needSuffixNode ? suffixV : bot;
+        final SeqVertex topForConnect = needPrefixNode ? getPrefixV() : top;
+        final SeqVertex botForConnect = needSuffixNode ? getSuffixV() : bot;
 
         if ( needPrefixNode ) {
-            outer.addVertex(prefixV);
-            if ( top != null ) outer.addEdge(top, prefixV, BaseEdge.orRef(splitGraph.outgoingEdgesOf(prefixV), 1));
+            outer.addVertex(getPrefixV());
+            if ( top != null ) {
+                outer.addEdge(top, getPrefixV(), BaseEdge.orRef(getSplitGraph().outgoingEdgesOf(getPrefixV()), 1));
+            }
         }
 
         if ( needSuffixNode ) {
-            outer.addVertex(suffixV);
-            if ( bot != null ) outer.addEdge(suffixV, bot, BaseEdge.orRef(splitGraph.incomingEdgesOf(suffixV), 1));
+            outer.addVertex(getSuffixV());
+            if ( bot != null ) {
+                outer.addEdge(getSuffixV(), bot, BaseEdge.orRef(getSplitGraph().incomingEdgesOf(getSuffixV()), 1));
+            }
         }
 
         if ( topForConnect != null ) {
-            for ( final BaseEdge e : splitGraph.outgoingEdgesOf(prefixV) ) {
-                final SeqVertex target = splitGraph.getEdgeTarget(e);
+            for ( final BaseEdge e : getSplitGraph().outgoingEdgesOf(getPrefixV()) ) {
+                final SeqVertex target = getSplitGraph().getEdgeTarget(e);
 
-                if ( target == suffixV ) { // going straight from prefix -> suffix
+                if ( target == getSuffixV()) { // going straight from prefix -> suffix
                     if ( botForConnect != null )
                         outer.addEdge(topForConnect, botForConnect, e);
                 } else {
@@ -218,8 +217,8 @@ public final class SharedVertexSequenceSplitter {
         }
 
         if ( botForConnect != null ) {
-            for ( final BaseEdge e : splitGraph.incomingEdgesOf(suffixV) ) {
-                outer.addEdge(splitGraph.getEdgeSource(e), botForConnect, e);
+            for ( final BaseEdge e : getSplitGraph().incomingEdgesOf(getSuffixV()) ) {
+                outer.addEdge(getSplitGraph().getEdgeSource(e), botForConnect, e);
             }
         }
     }
@@ -234,7 +233,8 @@ public final class SharedVertexSequenceSplitter {
      * @param middleVertices a non-empty set of vertices
      * @return
      */
-    protected static Pair<SeqVertex, SeqVertex> commonPrefixAndSuffixOfVertices(final Collection<SeqVertex> middleVertices) {
+    @VisibleForTesting
+    static Pair<SeqVertex, SeqVertex> commonPrefixAndSuffixOfVertices(final Collection<SeqVertex> middleVertices) {
         final List<byte[]> kmers = new ArrayList<>(middleVertices.size());
 
         int min = Integer.MAX_VALUE;
@@ -271,5 +271,25 @@ public final class SharedVertexSequenceSplitter {
             edgesToRemove.add(e);
             return e.copy();
         }
+    }
+
+    @VisibleForTesting
+    SeqVertex getPrefixV() {
+        return prefixV;
+    }
+
+    @VisibleForTesting
+    SeqVertex getSuffixV() {
+        return suffixV;
+    }
+
+    @VisibleForTesting
+    SeqGraph getSplitGraph() {
+        return splitGraph;
+    }
+
+    @VisibleForTesting
+    Collection<SeqVertex> getNewMiddles() {
+        return newMiddles;
     }
 }

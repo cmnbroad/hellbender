@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.readthreading.ReadThreadingGraph;
 import org.broadinstitute.hellbender.utils.GenomeLoc;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.collections.CountSet;
 import org.broadinstitute.hellbender.utils.haplotype.EventMap;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
@@ -79,7 +80,7 @@ public final class AssemblyResultSet {
 
         final Map<Haplotype,Haplotype> originalByTrimmedHaplotypes = calculateOriginalByTrimmedHaplotypes(trimmedAssemblyRegion);
         if (refHaplotype == null) throw new IllegalStateException();
-        if (trimmedAssemblyRegion == null) throw new IllegalArgumentException();
+        Utils.nonNull(trimmedAssemblyRegion);
         final AssemblyResultSet result = new AssemblyResultSet();
 
         for (final Haplotype trimmed : originalByTrimmedHaplotypes.keySet()) {
@@ -229,12 +230,8 @@ public final class AssemblyResultSet {
      * @return {@code true} if the assembly result set has been modified as a result of this call.
      */
     public boolean add(final Haplotype h) {
-        if (h == null) {
-            throw new IllegalArgumentException("input haplotype cannot be null");
-        }
-        if (h.getGenomeLocation() == null) {
-            throw new IllegalArgumentException("the haplotype provided must have a genomic location");
-        }
+        Utils.nonNull(h, "input haplotype cannot be null");
+        Utils.nonNull(h.getGenomeLocation(), "input haplotype cannot be null");
         if (haplotypes.contains(h)) {
             return false;
         }
@@ -261,10 +258,9 @@ public final class AssemblyResultSet {
      * @return {@code true} iff this called changes the assembly result set.
      */
     public boolean add(final Haplotype h, final AssemblyResult ar) {
-        if (h == null) throw new IllegalArgumentException("input haplotype cannot be null");
-        if (ar == null) throw new IllegalArgumentException("input assembly-result cannot be null");
-        if (h.getGenomeLocation() == null)
-            throw new IllegalArgumentException("the haplotype provided must have a genomic location");
+        Utils.nonNull(h, "input haplotype cannot be null");
+        Utils.nonNull(ar, "input assembly-result cannot be null");
+        Utils.nonNull(h.getGenomeLocation(), "the haplotype provided must have a genomic location");
 
         final boolean assemblyResultAdditionReturn =  add(ar);
 
@@ -296,9 +292,7 @@ public final class AssemblyResultSet {
      * @return {@code true} iff this addition changed the assembly result set.
      */
     public boolean add(final AssemblyResult ar) {
-        if (ar == null) {
-            throw new IllegalArgumentException("ar");
-        }
+        Utils.nonNull(ar);
         final int kmerSize = ar.getKmerSize();
         if (assemblyResultByKmerSize.containsKey(kmerSize)) {
             if (!assemblyResultByKmerSize.get(kmerSize).equals(ar)) {

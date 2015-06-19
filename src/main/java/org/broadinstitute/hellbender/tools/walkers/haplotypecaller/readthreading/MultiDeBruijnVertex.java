@@ -76,7 +76,7 @@ public final class MultiDeBruijnVertex extends BaseVertex {
      * @param name a non-null string
      */
     public void addRead(final String name) {
-        if ( name == null ) throw new IllegalArgumentException("name cannot be null");
+        Utils.nonNull(name, "name cannot be null");
         if ( KEEP_TRACK_OF_READS ) reads.add(name);
     }
 

@@ -30,7 +30,7 @@ final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
 
     @Override
     public String id() {
-        return "v" + singleHaplotypePath.head().getId();
+        return "v" + Integer.valueOf(singleHaplotypePath.head().getId());
     }
 
     @Override

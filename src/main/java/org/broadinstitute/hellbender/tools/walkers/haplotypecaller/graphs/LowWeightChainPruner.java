@@ -1,5 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.util.*;
 
 /**
@@ -24,7 +26,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
      * @param graph the graph to prune
      */
     public void pruneLowWeightChains(final BaseGraph<V,E> graph) {
-        if ( graph == null ) throw new IllegalArgumentException("Graph cannot be null");
+        Utils.nonNull(graph, "Graph cannot be null");
 
         if ( pruneFactor > 0 ) {
             final Set<E> edgesToKeep = new LinkedHashSet<>();
@@ -55,8 +57,9 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
      */
     private boolean mustBeKept(final Path<V, E> path, final int pruneFactor) {
         for ( final E edge : path.getEdges() ) {
-            if ( edge.getPruningMultiplicity() >= pruneFactor || edge.isRef() )
+            if ( edge.getPruningMultiplicity() >= pruneFactor || edge.isRef() ) {
                 return true;
+            }
         }
         return false;
     }
@@ -71,7 +74,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
      * @param graph the graph
      * @return a non-null collection of paths in graph
      */
-    protected final Collection<Path<V,E>> getLinearChains(final BaseGraph<V,E> graph) {
+    private Collection<Path<V,E>> getLinearChains(final BaseGraph<V, E> graph) {
         final Set<V> chainStarts = new LinkedHashSet<>();
 
         for ( final V v : graph.vertexSet() ) {
@@ -80,7 +83,9 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
             final int outDegree = graph.outDegreeOf(v);
             final int inDegree = graph.inDegreeOf(v);
             if ( outDegree > 1 || inDegree > 1 || (inDegree == 0 && outDegree > 0)) // don't add isolated vertices
+            {
                 chainStarts.add(v);
+            }
         }
 
         // must be after since we can add duplicate starts in the above finding algorithm
@@ -100,7 +105,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
      * @param path the path to extend
      * @return a fully extended linear path
      */
-    protected final Path<V,E> extendLinearChain(final Path<V, E> path) {
+    private Path<V,E> extendLinearChain(final Path<V, E> path) {
         final V last = path.getLastVertex();
         final Set<E> outEdges = path.getGraph().outgoingEdgesOf(last);
 

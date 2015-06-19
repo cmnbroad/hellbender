@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class HaplotypeSizeAndBaseComparatorUnitTest extends BaseTest {
+public final class HaplotypeSizeAndBaseComparatorUnitTest extends BaseTest {
     @Test
     public void testComparison() {
         // desired ordering is by size first, subordered by lexacographic relationship between bases
