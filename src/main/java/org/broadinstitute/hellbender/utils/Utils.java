@@ -331,7 +331,15 @@ public final class Utils {
         return command;
     }
 
-    static public <T> List<T> reverse(final List<T> l) {
+    public static byte[] reverse(final byte[] arr){
+        final byte[] result = new byte[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            result[arr.length - 1 - i] = arr[i];
+        }
+        return result;
+    }
+
+    public static <T> List<T> reverse(final List<T> l) {
         final List<T> newL = new ArrayList<>(l);
         Collections.reverse(newL);
         return newL;
@@ -471,9 +479,9 @@ public final class Utils {
      * </ul>
      * @return {@code true} iff {@code length} is 0 or all the bytes in both ranges are the same two-by-two.
      */
-    public static boolean equalRange(final byte[] left, final int leftOffset, byte[] right, final int rightOffset, final int length) {
-        if (left == null) throw new IllegalArgumentException("left cannot be null");
-        if (right == null) throw new IllegalArgumentException("right cannot be null");
+    public static boolean equalRange(final byte[] left, final int leftOffset, final byte[] right, final int rightOffset, final int length) {
+        Utils.nonNull(left, "left cannot be null");
+        Utils.nonNull(right, "right cannot be null");
         if (length < 0) throw new IllegalArgumentException("the length cannot be negative");
         if (leftOffset < 0) throw new IllegalArgumentException("left offset cannot be negative");
         if (leftOffset + length > left.length) throw new IllegalArgumentException("length goes beyond end of left array");
@@ -502,21 +510,5 @@ public final class Utils {
         }
 
         return c;
-    }
-
-    /**
-     * Create a new string thats a n duplicate copies of s
-     *
-     * use Strings.repeat
-     */
-    @Deprecated
-    public static String dupString(final String s, int nCopies) {
-        return Strings.repeat(s, nCopies);
-    }
-
-    public static String dupString(char c, int nCopies) {
-        char[] chars = new char[nCopies];
-        Arrays.fill(chars, c);
-        return new String(chars);
     }
 }
