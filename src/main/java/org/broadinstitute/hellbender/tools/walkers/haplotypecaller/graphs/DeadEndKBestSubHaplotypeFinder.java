@@ -47,7 +47,7 @@ final class DeadEndKBestSubHaplotypeFinder implements KBestSubHaplotypeFinder {
     }
 
     @Override
-    public KBestHaplotype getKBest(int k) {
+    public KBestHaplotype getKBest(final int k) {
         if (k < 0) {
             throw new IllegalArgumentException("k cannot be negative");
         } else {

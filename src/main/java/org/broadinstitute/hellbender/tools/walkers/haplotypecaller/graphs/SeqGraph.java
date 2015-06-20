@@ -1,29 +1,38 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.jgrapht.EdgeFactory;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A graph that contains base sequence at each node
  */
 public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
+
+    private final Logger logger = LogManager.getLogger(SeqGraph.class);
+
+    private static final long serialVersionUID = 1l;
+
+    public SeqGraph clone() {
+        return (SeqGraph) super.clone();
+    }
+
     /**
      * Edge factory that creates non-reference multiplicity 1 edges
      */
     private static class MyEdgeFactory implements EdgeFactory<SeqVertex, BaseEdge> {
         @Override
-        public BaseEdge createEdge(SeqVertex sourceVertex, SeqVertex targetVertex) {
+        public BaseEdge createEdge(final SeqVertex sourceVertex, final SeqVertex targetVertex) {
             return new BaseEdge(false, 1);
         }
     }
 
-    private final static boolean PRINT_SIMPLIFY_GRAPHS = false;
+    private static final boolean PRINT_SIMPLIFY_GRAPHS = false;
 
     /**
      * The minimum number of common bp from the prefix (head merging) or suffix (tail merging)
@@ -31,13 +40,13 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      * merging inappropriate head or tail nodes, which introduces large insertion / deletion events
      * as the merge operation creates a link among the non-linked sink / source vertices
      */
-    protected final static int MIN_COMMON_SEQUENCE_TO_MERGE_SOURCE_SINK_VERTICES = 10;
+    static final int MIN_COMMON_SEQUENCE_TO_MERGE_SOURCE_SINK_VERTICES = 10;
 
     /**
      * How many cycles of the graph simplifications algorithms will we run before
      * thinking something has gone wrong and throw an exception?
      */
-    private final static int MAX_REASONABLE_SIMPLIFICATION_CYCLES = 100;
+    private static final int MAX_REASONABLE_SIMPLIFICATION_CYCLES = 100;
 
     /**
      * Construct an empty SeqGraph where we'll add nodes based on a kmer size of kmer
@@ -60,7 +69,8 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
         simplifyGraph(Integer.MAX_VALUE);
     }
 
-    protected void simplifyGraph(final int maxCycles) {
+    @VisibleForTesting
+    void simplifyGraph(final int maxCycles) {
         // start off with one round of zipping of chains for performance reasons
         zipLinearChains();
 
@@ -97,8 +107,8 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
     private boolean simplifyGraphOnce(final int iteration) {
         //logger.info("simplifyGraph iteration " + i);
         // iterate until we haven't don't anything useful
-        boolean didSomeWork = false;
         printGraphSimplification(new File("simplifyGraph." + iteration + ".1.dot"));
+        boolean didSomeWork = false;
         didSomeWork |= new MergeDiamonds().transformUntilComplete();
         didSomeWork |= new MergeTails().transformUntilComplete();
         printGraphSimplification(new File("simplifyGraph." + iteration + ".2.diamonds_and_tails.dot"));
@@ -134,7 +144,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      */
     public boolean zipLinearChains() {
         // create the list of start sites [doesn't modify graph yet]
-        final List<SeqVertex> zipStarts = new LinkedList<>();
+        final Collection<SeqVertex> zipStarts = new LinkedList<>();
         for ( final SeqVertex source : vertexSet() ) {
             if ( isLinearChainStart(source) )
                 zipStarts.add(source);
@@ -224,7 +234,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      * @param linearChain a non-empty chain of vertices that can be zipped up into a single vertex
      * @return true if we actually merged at least two vertices together
      */
-    protected boolean mergeLinearChain(final LinkedList<SeqVertex> linearChain) {
+    private boolean mergeLinearChain(final LinkedList<SeqVertex> linearChain) {
         if ( linearChain.isEmpty() ) throw new IllegalArgumentException("BUG: cannot have linear chain with 0 elements but got " + linearChain);
 
         final SeqVertex first = linearChain.getFirst();
@@ -246,9 +256,11 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
         return true;
     }
 
-    protected SeqVertex mergeLinearChainVertices(final List<SeqVertex> vertices) {
+    private static SeqVertex mergeLinearChainVertices(final Iterable<SeqVertex> vertices) {
         final List<byte[]> seqs = new LinkedList<>();
-        for ( SeqVertex v : vertices ) seqs.add(v.getSequence());
+        for ( final SeqVertex v : vertices ) {
+            seqs.add(v.getSequence());
+        }
         final byte[] seqsCat = Utils.concat(seqs.toArray(new byte[][]{}));
         return new SeqVertex( seqsCat );
     }
@@ -314,7 +326,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      *
      * for all nodes that match this configuration.
      */
-    protected class MergeDiamonds extends VertexBasedTransformer {
+    protected final class MergeDiamonds extends VertexBasedTransformer {
         @Override
         protected boolean tryToTransform(final SeqVertex top) {
             final Set<SeqVertex> middles = outgoingVerticesOf(top);
@@ -371,7 +383,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      *
      * Differs from the diamond transform in that no bottom node is required
      */
-    protected class MergeTails extends VertexBasedTransformer {
+    final class MergeTails extends VertexBasedTransformer {
         @Override
         protected boolean tryToTransform(final SeqVertex top) {
             final Set<SeqVertex> tails = outgoingVerticesOf(top);
@@ -406,7 +418,7 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      *
      * for all nodes that match this configuration.
      */
-    protected class MergeCommonSuffices extends VertexBasedTransformer {
+    final class MergeCommonSuffices extends VertexBasedTransformer {
         @Override
         boolean tryToTransform(final SeqVertex bottom) {
             return SharedSequenceMerger.merge(SeqGraph.this, bottom);
@@ -426,14 +438,14 @@ public final class SeqGraph extends BaseGraph<SeqVertex, BaseEdge> {
      *
      * Differs from the diamond transform in that no top node is required
      */
-    protected class SplitCommonSuffices extends VertexBasedTransformer {
-        final Set<SeqVertex> alreadySplit = new HashSet<>();
+    final class SplitCommonSuffices extends VertexBasedTransformer {
+        final Collection<SeqVertex> alreadySplit = new HashSet<>();
 
         @Override
         boolean tryToTransform(final SeqVertex bottom) {
-            if ( alreadySplit.contains(bottom) )
+            if ( alreadySplit.contains(bottom) ) {
                 return false;
-            else {
+            } else {
                 alreadySplit.add(bottom);
                 return CommonSuffixSplitter.split(SeqGraph.this, bottom);
             }

@@ -19,7 +19,7 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
     private final T lastVertex;
 
     // the list of edges comprising the path
-    private final ArrayList<E> edgesInOrder;
+    private final List<E> edgesInOrder;
 
     // the scores for the path
     private final int totalScore;
@@ -102,7 +102,7 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * @param path the other path we might be the same as
      * @return true if this and path are the same
      */
-    public boolean pathsAreTheSame(Path<T,E> path) {
+    public boolean pathsAreTheSame(final Path<T,E> path) {
         return totalScore == path.totalScore && edgesInOrder.equals(path.edgesInOrder);
     }
 
@@ -147,7 +147,7 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * Get the edges of this path in order
      * @return a non-null list of edges
      */
-    public List<E> getEdges() { return edgesInOrder; }
+    public Collection<E> getEdges() { return edgesInOrder; }
 
     /**
      * Get the list of vertices in this path in order defined by the edges of the path
@@ -187,7 +187,7 @@ public final class Path<T extends BaseVertex, E extends BaseEdge> {
      * @return a non-null vertex
      */
     public T getFirstVertex() {
-        if (edgesInOrder.size() == 0) {
+        if (edgesInOrder.isEmpty()) {
             return lastVertex;
         } else {
             return getGraph().getEdgeSource(edgesInOrder.get(0));

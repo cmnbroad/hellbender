@@ -16,7 +16,7 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
     /**
      * Collection of subFinders that provided the actual solutions.
      */
-    protected final Collection<F> subFinders;
+    final Collection<F> subFinders;
 
     /**
      *  Flag indicating whether the sub-finders have been processed or not.
@@ -156,7 +156,7 @@ public class AggregatedSubHaplotypeFinder<F extends KBestSubHaplotypeFinder> imp
      */
     private static final class MyKBestHaplotypeResult extends KBestHaplotype {
 
-        private KBestSubHaplotypeFinder subFinder;
+        private final KBestSubHaplotypeFinder subFinder;
 
         private final KBestHaplotype result;
 

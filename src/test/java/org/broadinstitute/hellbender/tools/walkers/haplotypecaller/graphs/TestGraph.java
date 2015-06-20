@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * A Test kmer graph
  */
-public class TestGraph extends BaseGraph<MultiDeBruijnVertex, BaseEdge> {
+public final class TestGraph extends BaseGraph<MultiDeBruijnVertex, BaseEdge> {
     public TestGraph clone() {
         return (TestGraph) super.clone();
     }

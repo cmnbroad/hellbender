@@ -277,7 +277,7 @@ public final class ReadThreadingGraphUnitTest extends BaseTest {
         Assert.assertTrue(cigar.equals(result.cigar.toString()), "SW generated cigar = " + result.cigar.toString());
 
         // confirm that the goodness of the cigar agrees with our expectations
-        Assert.assertEquals(rtgraph.cigarIsOkayToMerge(result.cigar, false, true), cigarIsGood);
+        Assert.assertEquals(ReadThreadingGraph.cigarIsOkayToMerge(result.cigar, false, true), cigarIsGood);
 
         // confirm that the tail merging works as expected
         if ( cigarIsGood ) {

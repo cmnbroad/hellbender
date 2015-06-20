@@ -88,10 +88,7 @@ public final class KMerCounter {
 
     @Override
     public String toString() {
-        final StringBuilder b = new StringBuilder("KMerCounter{");
-        b.append("counting ").append(countsByKMer.size()).append(" distinct kmers");
-        b.append("\n}");
-        return b.toString();
+        return "KMerCounter{counting " + countsByKMer.size() + " distinct kmers\n}";
     }
 
     protected static final class CountedKmer implements Comparable<CountedKmer> {
@@ -129,7 +126,7 @@ public final class KMerCounter {
     // -------------------------------------------------------------------------------------
 
     @VisibleForTesting
-    void addKmer(final String rawKmer, final int kmerCount) {
+    private void addKmer(final String rawKmer, final int kmerCount) {
         addKmer(new Kmer(rawKmer), kmerCount);
     }
 

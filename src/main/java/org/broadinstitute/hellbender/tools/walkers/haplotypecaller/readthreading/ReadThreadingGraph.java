@@ -18,13 +18,12 @@ import org.broadinstitute.hellbender.utils.smithwaterman.SWParameterSet;
 import org.broadinstitute.hellbender.utils.smithwaterman.SmithWaterman;
 import org.jgrapht.EdgeFactory;
 
-import javax.rmi.CORBA.Util;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSampleEdge> implements KmerSearchableGraph<MultiDeBruijnVertex,MultiSampleEdge> {
+public final class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSampleEdge> implements KmerSearchableGraph<MultiDeBruijnVertex,MultiSampleEdge> {
 
     private static final Logger logger = LogManager.getLogger(ReadThreadingGraph.class);
 
@@ -36,8 +35,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
     private static final long serialVersionUID = 1l;
     private int maxMismatchesInDanglingHead = -1;
 
-    protected boolean alreadyBuilt;
-
+    private boolean alreadyBuilt;
 
     private boolean startThreadingOnlyAtExistingVertex = false;
 
@@ -52,21 +50,18 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
     /**
      * A set of non-unique kmers that cannot be used as merge points in the graph
      */
-    protected Set<Kmer> nonUniqueKmers;
+    private Set<Kmer> nonUniqueKmers;
 
     /**
      * A map from kmers -> their corresponding vertex in the graph
      */
-    protected Map<Kmer, MultiDeBruijnVertex> uniqueKmers = new LinkedHashMap<>();
+    private final Map<Kmer, MultiDeBruijnVertex> uniqueKmers = new LinkedHashMap<>();
 
-    /**
-     *
-     */
     private final boolean debugGraphTransformations;
-    final byte minBaseQualityToUseInAssembly;
+    private final byte minBaseQualityToUseInAssembly;
 
-    protected boolean increaseCountsBackwards = true;
-    protected boolean increaseCountsThroughBranches = false; // this may increase the branches without bounds
+    private final boolean increaseCountsBackwards = true;
+    boolean increaseCountsThroughBranches = false; // this may increase the branches without bounds
 
     // --------------------------------------------------------------------------------
     // state variables, initialized in resetToInitialState()
@@ -84,7 +79,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
     }
 
     @VisibleForTesting
-    final void setMaxMismatchesInDanglingHead(final int maxMismatchesInDanglingHead) {
+    void setMaxMismatchesInDanglingHead(final int maxMismatchesInDanglingHead) {
         this.maxMismatchesInDanglingHead = maxMismatchesInDanglingHead;
     }
 
@@ -95,7 +90,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param b expanding base.
      * @return never null, but perhaps an empty set. You cannot assume that you can modify the result.
      */
-    protected Set<MultiDeBruijnVertex> getNextVertices(final MultiDeBruijnVertex v, final byte b) {
+    private Set<MultiDeBruijnVertex> getNextVertices(final MultiDeBruijnVertex v, final byte b) {
         Utils.nonNull(v, "the input vertex cannot be null");
         if (!vertexSet().contains(v)) throw new IllegalArgumentException("the vertex must be present in the graph");
         final List<MultiDeBruijnVertex> result = new LinkedList<>();
@@ -116,7 +111,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * Create a new ReadThreadingAssembler using kmerSize for matching
      * @param kmerSize must be >= 1
      */
-    protected ReadThreadingGraph(final int kmerSize, final boolean debugGraphTransformations, final byte minBaseQualityToUseInAssembly, final int numPruningSamples) {
+    ReadThreadingGraph(final int kmerSize, final boolean debugGraphTransformations, final byte minBaseQualityToUseInAssembly, final int numPruningSamples) {
         super(kmerSize, new MyEdgeFactory(numPruningSamples));
 
         if ( kmerSize < 1 ) throw new IllegalArgumentException("bad minkKmerSize " + kmerSize);
@@ -142,7 +137,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param sequence a non-null sequence
      * @param isRef is this the reference sequence?
      */
-    protected void addSequence(final byte[] sequence, final boolean isRef) {
+    final void addSequence(final byte[] sequence, final boolean isRef) {
         addSequence("anonymous", sequence, isRef);
     }
 
@@ -151,7 +146,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      *
      * @see #addSequence(String, String, byte[], int, int, int, boolean) for full information
      */
-    public void addSequence(final String seqName, final byte[] sequence, final boolean isRef) {
+    public final void addSequence(final String seqName, final byte[] sequence, final boolean isRef) {
         addSequence(seqName, sequence, 1, isRef);
     }
 
@@ -160,7 +155,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      *
      * @see #addSequence(String, String, byte[], int, int, int, boolean) for full information
      */
-    public void addSequence(final String seqName, final byte[] sequence, final int count, final boolean isRef) {
+    public final void addSequence(final String seqName, final byte[] sequence, final int count, final boolean isRef) {
         addSequence(seqName, ANONYMOUS_SAMPLE, sequence, 0, sequence.length, count, isRef);
     }
 
@@ -174,7 +169,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param count the representative count of this sequence (to use as the weight)
      * @param isRef is this the reference sequence.
      */
-    public void addSequence(final String seqName, final String sampleName, final byte[] sequence, final int start, final int stop, final int count, final boolean isRef) {
+    private void addSequence(final String seqName, final String sampleName, final byte[] sequence, final int start, final int stop, final int count, final boolean isRef) {
         // note that argument testing is taken care of in SequenceForKmers
         if ( alreadyBuilt ) throw new IllegalStateException("Graph already built");
 
@@ -226,7 +221,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param seqForKmers the sequence we want to thread into the graph
      * @return the position of the starting vertex in seqForKmer, or -1 if it cannot find one
      */
-    protected int findStart(final SequenceForKmers seqForKmers) {
+    private int findStart(final SequenceForKmers seqForKmers) {
         if ( seqForKmers.isRef )
             return 0;
 
@@ -248,7 +243,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param kmer the query kmer.
      * @return {@code true} if we can start thread the sequence at this kmer, {@code false} otherwise.
      */
-    protected boolean isThreadingStart(final Kmer kmer) {
+    private boolean isThreadingStart(final Kmer kmer) {
         Utils.nonNull(kmer);
         return startThreadingOnlyAtExistingVertex ? uniqueKmers.containsKey(kmer) : !nonUniqueKmers.contains(kmer);
     }
@@ -259,25 +254,15 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param value  {@code true} if threading will start only at existing vertices in the graph, {@code false} if
      *  it can start at any unique kmer.
      */
-    public void setThreadingStartOnlyAtExistingVertex(final boolean value) {
+    public final void setThreadingStartOnlyAtExistingVertex(final boolean value) {
         startThreadingOnlyAtExistingVertex = value;
-    }
-
-    /**
-     * Indicates the threading start location policy.
-     *
-     * @return {@code true} if threading will start only at existing vertices in the graph, {@code false} if
-     *  it can start at any unique kmer.
-     */
-    public boolean getThreadingStartOnlyAtExistingVertex() {
-        return startThreadingOnlyAtExistingVertex;
     }
 
     /**
      * Build the read threaded assembly graph if it hasn't already been constructed from the sequences that have
      * been added to the graph.
      */
-    public void buildGraphIfNecessary() {
+    public final void buildGraphIfNecessary() {
         if ( alreadyBuilt ) return;
 
         // determine the kmer size we'll use, and capture the set of nonUniques for that kmer size
@@ -292,7 +277,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
         for ( final List<SequenceForKmers> sequencesForSample : pending.values() ) {
             for ( final SequenceForKmers sequenceForKmers : sequencesForSample ) {
                 threadSequence(sequenceForKmers);
-                if ( WRITE_GRAPH ) printGraph(new File("threading." + counter++ + "." + sequenceForKmers.name.replace(" ", "_") + ".dot"), 0);
+                if ( WRITE_GRAPH ) printGraph(new File("threading." + counter++ + '.' + sequenceForKmers.name.replace(" ", "_") + ".dot"), 0);
             }
 
             // flush the single sample edge values from the graph
@@ -303,12 +288,12 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
         pending.clear();
         alreadyBuilt = true;
         for (final MultiDeBruijnVertex v : uniqueKmers.values())
-            v.setAdditionalInfo(v.additionalInfo() + "+");
+            v.setAdditionalInfo(v.additionalInfo() + '+');
     }
 
 
     @Override
-    public boolean removeVertex(MultiDeBruijnVertex V) {
+    public boolean removeVertex(final MultiDeBruijnVertex V) {
         final boolean result = super.removeVertex(V);
         if (result) {
             final byte[] sequence = V.getSequence();
@@ -318,10 +303,10 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
         return result;
     }
 
-
+    @Override
     public void removeSingletonOrphanVertices() {
         // Run through the graph and clean up singular orphaned nodes
-        final List<MultiDeBruijnVertex> verticesToRemove = new LinkedList<>();
+        final Collection<MultiDeBruijnVertex> verticesToRemove = new LinkedList<>();
         for( final MultiDeBruijnVertex v : vertexSet() ) {
             if( inDegreeOf(v) == 0 && outDegreeOf(v) == 0 ) {
                 verticesToRemove.add(v);
@@ -352,7 +337,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
     private static final class MyEdgeFactory implements EdgeFactory<MultiDeBruijnVertex, MultiSampleEdge> {
         final int numPruningSamples;
 
-        public MyEdgeFactory(int numPruningSamples) {
+        private MyEdgeFactory(final int numPruningSamples) {
             this.numPruningSamples = numPruningSamples;
         }
 
@@ -370,11 +355,13 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * Class to keep track of the important dangling chain merging data
      */
     static final class DanglingChainMergeHelper {
-        final List<MultiDeBruijnVertex> danglingPath, referencePath;
-        final byte[] danglingPathString, referencePathString;
+        final List<MultiDeBruijnVertex> danglingPath;
+        final List<MultiDeBruijnVertex> referencePath;
+        final byte[] danglingPathString;
+        final byte[] referencePathString;
         final Cigar cigar;
 
-        public DanglingChainMergeHelper(final List<MultiDeBruijnVertex> danglingPath,
+        DanglingChainMergeHelper(final List<MultiDeBruijnVertex> danglingPath,
                                         final List<MultiDeBruijnVertex> referencePath,
                                         final byte[] danglingPathString,
                                         final byte[] referencePathString,
@@ -390,11 +377,9 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
     /** structure that keeps track of the non-unique kmers for a given kmer size */
     private static final class NonUniqueResult {
         final Set<Kmer> nonUniques;
-        final int kmerSize;
 
-        private NonUniqueResult(Set<Kmer> nonUniques, int kmerSize) {
+        private NonUniqueResult(final Set<Kmer> nonUniques) {
             this.nonUniques = nonUniques;
-            this.kmerSize = kmerSize;
         }
     }
 
@@ -404,7 +389,8 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
     static final class SequenceForKmers {
         final String name;
         final byte[] sequence;
-        final int start, stop;
+        final int start;
+        final int stop;
         final int count;
         final boolean isRef;
 
@@ -459,16 +445,17 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
 
         // we need to build a list of dangling heads because that process can modify the graph (and otherwise generate
         // a ConcurrentModificationException if we do it while iterating over the vertexes)
-        final List<MultiDeBruijnVertex> danglingHeads = new ArrayList<>();
+        final Collection<MultiDeBruijnVertex> danglingHeads = new ArrayList<>();
 
-        int attempted = 0;
-        int nRecovered = 0;
         for ( final MultiDeBruijnVertex v : vertexSet() ) {
-            if ( inDegreeOf(v) == 0 && ! isRefSource(v) )
+            if ( inDegreeOf(v) == 0 && ! isRefSource(v) ) {
                 danglingHeads.add(v);
+            }
         }
 
         // now we can try to recover the dangling heads
+        int attempted = 0;
+        int nRecovered = 0;
         for ( final MultiDeBruijnVertex v : danglingHeads ) {
             attempted++;
             nRecovered += recoverDanglingHead(v, pruneFactor, minDanglingBranchLength);
@@ -530,7 +517,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @return true if it's okay to merge, false otherwise
      */
     @VisibleForTesting
-    final boolean cigarIsOkayToMerge(final Cigar cigar, final boolean requireFirstElementM, final boolean requireLastElementM) {
+    static boolean cigarIsOkayToMerge(final Cigar cigar, final boolean requireFirstElementM, final boolean requireLastElementM) {
 
         final List<CigarElement> elements = cigar.getCigarElements();
         final int numElements = elements.size();
@@ -774,7 +761,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @return  non-null sequence of bases corresponding to the given path
      */
     @VisibleForTesting
-    final byte[] getBasesForPath(final List<MultiDeBruijnVertex> path, final boolean expandSource) {
+    byte[] getBasesForPath(final List<MultiDeBruijnVertex> path, final boolean expandSource) {
         Utils.nonNull(path, "Path cannot be null");
 
         final StringBuilder sb = new StringBuilder();
@@ -869,7 +856,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param maxKmerSize the maximum kmer size to consider
      * @return a non-null NonUniqueResult
      */
-    protected NonUniqueResult determineKmerSizeAndNonUniques(final int minKmerSize, final int maxKmerSize) {
+    private NonUniqueResult determineKmerSizeAndNonUniques(final int minKmerSize, final int maxKmerSize) {
         final Collection<SequenceForKmers> withNonUniques = getAllPendingSequences();
         final Set<Kmer> nonUniqueKmers = new HashSet<>();
 
@@ -901,7 +888,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
         }
 
         // necessary because the loop breaks with kmerSize = max + 1
-        return new NonUniqueResult(nonUniqueKmers, Math.min(kmerSize, maxKmerSize));
+        return new NonUniqueResult(nonUniqueKmers);
     }
 
     /**
@@ -909,8 +896,10 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @return non-null Collection
      */
     private Collection<SequenceForKmers> getAllPendingSequences() {
-        final LinkedList<SequenceForKmers> result = new LinkedList<>();
-        for ( final List<SequenceForKmers> oneSampleWorth : pending.values() ) result.addAll(oneSampleWorth);
+        final Collection<SequenceForKmers> result = new LinkedList<>();
+        for ( final List<SequenceForKmers> oneSampleWorth : pending.values() ) {
+            result.addAll(oneSampleWorth);
+        }
         return result;
     }
 
@@ -920,7 +909,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param kmerSize the size of the kmers
      * @return a non-null collection of non-unique kmers in sequence
      */
-    protected static Collection<Kmer> determineNonUniqueKmers(final SequenceForKmers seqForKmers, final int kmerSize) {
+    static Collection<Kmer> determineNonUniqueKmers(final SequenceForKmers seqForKmers, final int kmerSize) {
         // count up occurrences of kmers within each read
         final KMerCounter counter = new KMerCounter(kmerSize);
         final int stopPosition = seqForKmers.stop - kmerSize;
@@ -1062,7 +1051,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
 
                 if ( start != -1 && len >= kmerSize ) {
                     // if the sequence is long enough to get some value out of, add it to the graph
-                    final String name = read.getReadName() + "_" + start + "_" + end;
+                    final String name = read.getReadName() + '_' + start + '_' + end;
                     addSequence(name, read.getReadGroup().getSample(), read.getReadBases(), start, end, 1, false);
                 }
 
@@ -1081,7 +1070,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * @param qual  the quality of that base
      * @return true if the base can be used for assembly, false otherwise
      */
-    protected boolean baseIsUsableForAssembly(final byte base, final byte qual) {
+    private boolean baseIsUsableForAssembly(final byte base, final byte qual) {
         return base != BaseUtils.Base.N.base && qual >= minBaseQualityToUseInAssembly;
     }
 
@@ -1089,7 +1078,8 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
      * Get the set of non-unique kmers in this graph.  For debugging purposes
      * @return a non-null set of kmers
      */
-    protected Set<Kmer> getNonUniqueKmers() {
+    @VisibleForTesting
+    Set<Kmer> getNonUniqueKmers() {
         return nonUniqueKmers;
     }
 
@@ -1168,7 +1158,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
         // Loop between path strings and add them one by one.
         while (pathMatcher.find()) {
             final String label = pathMatcher.group(2);
-            final boolean isReference = (label != null && label.equals("REF"));
+            final boolean isReference = "REF".equals(label);
             if (referenceFound) {
                 if (isReference) {
                     throw new IllegalArgumentException("there are two reference paths");
@@ -1195,7 +1185,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
             final boolean isSource =  ids[0] == null || !vertexById.containsKey(ids[0]);
             if (isSource && seqs[0].length() != kmerSize) {
                 throw new IllegalArgumentException("source sequence length must be the same as the kmerSize "
-                        + ids[0] + " " + seqs[0] + " " + pathMatcher.group());
+                        + ids[0] + ' ' + seqs[0] + ' ' + pathMatcher.group());
             }
             final MultiDeBruijnVertex firstVertex;
             if (ids[0] != null && vertexById.containsKey(ids[0])) {
@@ -1221,7 +1211,7 @@ public class ReadThreadingGraph extends BaseGraph<MultiDeBruijnVertex, MultiSamp
                 final MultiDeBruijnVertex nextVertex;
                 if (ids[i] == null || !vertexById.containsKey(ids[i])) {
                     final Set<MultiDeBruijnVertex> nextVertices = getNextVertices(lastVertex,seqs[i].getBytes()[0]);
-                    if (nextVertices.size() == 0) {
+                    if (nextVertices.isEmpty()) {
                         nextVertex = new MultiDeBruijnVertex(extendSequence(lastVertex.getSequence(),seqs[i].getBytes()[0]));
                         addVertex(nextVertex);
                     } else {

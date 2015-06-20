@@ -16,7 +16,7 @@ import java.util.*;
 public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge> {
     private final int pruneFactor;
 
-    public LowWeightChainPruner(int pruneFactor) {
+    public LowWeightChainPruner(final int pruneFactor) {
         if ( pruneFactor < 0 ) throw new IllegalArgumentException("pruneFactor must be >= 0 but got " + pruneFactor);
         this.pruneFactor = pruneFactor;
     }
@@ -29,7 +29,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
         Utils.nonNull(graph, "Graph cannot be null");
 
         if ( pruneFactor > 0 ) {
-            final Set<E> edgesToKeep = new LinkedHashSet<>();
+            final Collection<E> edgesToKeep = new LinkedHashSet<>();
 
             for ( final Path<V,E> linearChain : getLinearChains(graph) ) {
                 if( mustBeKept(linearChain, pruneFactor) ) {
@@ -39,7 +39,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
             }
 
             // we want to remove all edges not in the keep set
-            final Set<E> edgesToRemove = new HashSet<>(graph.edgeSet());
+            final Collection<E> edgesToRemove = new HashSet<>(graph.edgeSet());
             edgesToRemove.removeAll(edgesToKeep);
             graph.removeAllEdges(edgesToRemove);
 
@@ -75,7 +75,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
      * @return a non-null collection of paths in graph
      */
     private Collection<Path<V,E>> getLinearChains(final BaseGraph<V, E> graph) {
-        final Set<V> chainStarts = new LinkedHashSet<>();
+        final Collection<V> chainStarts = new LinkedHashSet<>();
 
         for ( final V v : graph.vertexSet() ) {
             // we want a list of all chain start vertices.  These are all vertices with out
@@ -89,7 +89,7 @@ public final class LowWeightChainPruner<V extends BaseVertex, E extends BaseEdge
         }
 
         // must be after since we can add duplicate starts in the above finding algorithm
-        final List<Path<V, E>> linearChains = new LinkedList<>();
+        final Collection<Path<V, E>> linearChains = new LinkedList<>();
         for ( final V chainStart : chainStarts ) {
             for ( final E outEdge : graph.outgoingEdgesOf(chainStart) ) {
                 // these chains are composed of the starts + their next vertices

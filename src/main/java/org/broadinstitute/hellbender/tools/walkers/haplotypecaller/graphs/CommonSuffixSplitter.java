@@ -135,7 +135,7 @@ public final class CommonSuffixSplitter {
      * @return true if we can safely split up toMerge
      */
     private static boolean safeToSplit(final SeqGraph graph, final SeqVertex bot, final Collection<SeqVertex> toMerge) {
-        final Set<SeqVertex> outgoingOfBot = new HashSet<>(graph.outgoingVerticesOf(bot));
+        final Collection<SeqVertex> outgoingOfBot = new HashSet<>(graph.outgoingVerticesOf(bot));
         for ( final SeqVertex m : toMerge ) {
             final Set<BaseEdge> outs = graph.outgoingEdgesOf(m);
             if ( m == bot || outs.size() != 1 || ! graph.outgoingVerticesOf(m).contains(bot) )
@@ -159,7 +159,7 @@ public final class CommonSuffixSplitter {
      * @param middleVertices a non-empty set of vertices
      * @return a single vertex that contains the common suffix of all middle vertices
      */
-    public static SeqVertex commonSuffix(final Collection<SeqVertex> middleVertices) {
+    private static SeqVertex commonSuffix(final Collection<SeqVertex> middleVertices) {
         final List<byte[]> kmers = GraphUtils.getKmers(middleVertices);
         final int min = GraphUtils.minKmerLength(kmers);
         final int suffixLen = GraphUtils.compSuffixLen(kmers, min);

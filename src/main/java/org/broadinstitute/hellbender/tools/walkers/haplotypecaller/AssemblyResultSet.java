@@ -44,7 +44,7 @@ public final class AssemblyResultSet {
     private final CountSet kmerSizes;
     private SortedSet<VariantContext> variationEvents;
     private boolean debug;
-    private static Logger logger = LogManager.getLogger(AssemblyResultSet.class);
+    private static final Logger logger = LogManager.getLogger(AssemblyResultSet.class);
 
     /**
      * Constructs a new empty assembly result set.
@@ -54,15 +54,6 @@ public final class AssemblyResultSet {
         haplotypes = new LinkedHashSet<>(10);
         assemblyResultByHaplotype = new LinkedHashMap<>(10);
         kmerSizes = new CountSet(4);
-    }
-
-
-    /**
-     * Change the debug status for this assembly-result-set.
-     * @param newValue new value for the debug status.
-     */
-    void setDebug(final boolean newValue) {
-        debug = newValue;
     }
 
     /**
@@ -79,7 +70,7 @@ public final class AssemblyResultSet {
     public AssemblyResultSet trimTo(final AssemblyRegion trimmedAssemblyRegion) {
 
         final Map<Haplotype,Haplotype> originalByTrimmedHaplotypes = calculateOriginalByTrimmedHaplotypes(trimmedAssemblyRegion);
-        if (refHaplotype == null) throw new IllegalStateException();
+        if (refHaplotype == null) throw new IllegalStateException("refHaplotype is null");
         Utils.nonNull(trimmedAssemblyRegion);
         final AssemblyResultSet result = new AssemblyResultSet();
 
@@ -186,7 +177,7 @@ public final class AssemblyResultSet {
      *
      * @throws NullPointerException if {@code pw} is {@code null}.
      */
-    public void debugDump(final PrintWriter pw) {
+    private void debugDump(final PrintWriter pw) {
         if (getHaplotypeList().isEmpty()) {
             return;
         }
@@ -291,7 +282,7 @@ public final class AssemblyResultSet {
      * @throws IllegalStateException if there is an assembly result with the same kmerSize.
      * @return {@code true} iff this addition changed the assembly result set.
      */
-    public boolean add(final AssemblyResult ar) {
+    private boolean add(final AssemblyResult ar) {
         Utils.nonNull(ar);
         final int kmerSize = ar.getKmerSize();
         if (assemblyResultByKmerSize.containsKey(kmerSize)) {
@@ -388,7 +379,7 @@ public final class AssemblyResultSet {
      * @return greater than 0.
      */
     public int getMaximumKmerSize() {
-        if (kmerSizes.size() == 0) {
+        if (kmerSizes.isEmpty()) {
             throw new IllegalStateException("there is yet no kmerSize in this assembly result set");
         }
         return kmerSizes.max();

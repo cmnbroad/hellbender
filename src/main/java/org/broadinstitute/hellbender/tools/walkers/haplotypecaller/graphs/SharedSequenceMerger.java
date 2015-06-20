@@ -35,7 +35,7 @@ public final class SharedSequenceMerger {
         else {
 //            graph.printGraph(new File("csm." + counter + "." + v.getSequenceString() + "_pre.dot"), 0);
 
-            final List<BaseEdge> edgesToRemove = new LinkedList<>();
+            final Collection<BaseEdge> edgesToRemove = new LinkedList<>();
             final byte[] prevSeq = prevs.iterator().next().getSequence();
             final SeqVertex newV = new SeqVertex(ArrayUtils.addAll(prevSeq, v.getSequence()));
             graph.addVertex(newV);

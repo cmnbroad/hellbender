@@ -9,10 +9,10 @@ import java.util.Arrays;
  */
 public class BaseVertex {
     /** placeholder to store additional information for debugging purposes */
-    String additionalInfo = "";
+    private String additionalInfo = "";
     protected final byte[] sequence;
-    private final static int UNASSIGNED_HASHCODE = -1;
-    int cachedHashCode = UNASSIGNED_HASHCODE;
+    private static final int UNASSIGNED_HASHCODE = -1;
+    private int cachedHashCode = UNASSIGNED_HASHCODE;
 
     /**
      * Create a new sequence vertex with sequence
@@ -35,7 +35,7 @@ public class BaseVertex {
      *
      * @return true if sequence is empty, false otherwise
      */
-    public boolean isEmpty() {
+    public final boolean isEmpty() {
         return length() == 0;
     }
 
@@ -43,7 +43,7 @@ public class BaseVertex {
      * Get the length of this sequence
      * @return a positive integer >= 1
      */
-    public int length() {
+    public final int length() {
         return sequence.length;
     }
 
@@ -51,7 +51,7 @@ public class BaseVertex {
      * For testing purposes only -- low performance
      * @param sequence the sequence as a string
      */
-    protected BaseVertex(final String sequence) {
+    BaseVertex(final String sequence) {
         this(sequence.getBytes());
     }
 
@@ -60,7 +60,7 @@ public class BaseVertex {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BaseVertex that = (BaseVertex) o;
+        final BaseVertex that = (BaseVertex) o;
 
         return seqEquals(that);
     }
@@ -83,7 +83,7 @@ public class BaseVertex {
      * @param b the vertex to compare ourselves to
      * @return true if b and this have the same sequence, regardless of other attributes that might differentiate them
      */
-    public boolean seqEquals(final BaseVertex b) {
+    public final boolean seqEquals(final BaseVertex b) {
         return Arrays.equals(this.getSequence(), b.getSequence());
     }
 
@@ -99,7 +99,7 @@ public class BaseVertex {
      *
      * @return a non-null pointer to the bases contained in this vertex
      */
-    public byte[] getSequence() {
+    public final byte[] getSequence() {
         return sequence;
     }
 
@@ -107,7 +107,7 @@ public class BaseVertex {
      * Get a string representation of the bases in this vertex
      * @return a non-null String
      */
-    public String getSequenceString() {
+    public final String getSequenceString() {
         return new String(sequence);
     }
 
@@ -130,7 +130,7 @@ public class BaseVertex {
      * Set additional debugging information for this vertex
      * @param info the new info value.
      */
-    public void setAdditionalInfo(final String info) {
+    public final void setAdditionalInfo(final String info) {
         Utils.nonNull(info, "info cannot be null");
         additionalInfo = info;
     }
@@ -154,7 +154,7 @@ public class BaseVertex {
      *
      * @return {@code true} iff so.
      */
-    public boolean hasAmbiguousSequence() {
+    public final boolean hasAmbiguousSequence() {
         for (final byte base : sequence)
             switch (Character.toUpperCase(base)) {
                 case 'A' :

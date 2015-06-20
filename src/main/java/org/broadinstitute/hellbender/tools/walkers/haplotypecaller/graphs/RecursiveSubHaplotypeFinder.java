@@ -39,7 +39,7 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
      * @param vertex first vertex for all sub-haplotype solutions provided by this finder
      * @param children map from outgoing edge to the corresponding sub-sub-haplotype finder.
      */
-    public RecursiveSubHaplotypeFinder(final SeqGraph graph, final SeqVertex vertex,
+    RecursiveSubHaplotypeFinder(final SeqGraph graph, final SeqVertex vertex,
                                        final Map<BaseEdge, KBestSubHaplotypeFinder> children) {
         super(createChildFinderCollection(vertex, children));
         this.vertex = vertex;
@@ -69,7 +69,7 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
             }
             result.add(subFinder);
         }
-        if (result.size() == 0){
+        if (result.isEmpty()){
             return Collections.emptySet();
         } else if (result.size() == 1) { // no calibration needed, by default edgeScore is 0.
             return Collections.singleton(result.get(0));
@@ -111,7 +111,7 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
      * @return never {@code null}, the reformatted label.
      */
     private static String simplifyZeros(final String edgeLabel) {
-        if (edgeLabel.equals("0.000") || edgeLabel.equals("-0.000") ) {
+        if ("0.000".equals(edgeLabel) || "-0.000".equals(edgeLabel)) {
             return "0.";
         }
         int i = edgeLabel.length() - 1;
@@ -163,7 +163,7 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
         }
 
         @Override
-        public KBestHaplotype getKBest(int k) {
+        public KBestHaplotype getKBest(final int k) {
             return new ChildKBestSubHaplotype(vertex,edge,childFinder.getKBest(k),edgeScore);
         }
 
@@ -210,7 +210,7 @@ final class RecursiveSubHaplotypeFinder extends AggregatedSubHaplotypeFinder<Rec
         private final boolean isReference;
 
 
-        public ChildKBestSubHaplotype(final SeqVertex vertex, final BaseEdge edge, final KBestHaplotype child, final double edgeScore) {
+        private ChildKBestSubHaplotype(final SeqVertex vertex, final BaseEdge edge, final KBestHaplotype child, final double edgeScore) {
             this.score = edgeScore + child.score();
             this.vertex = vertex;
             this.child = child;

@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A graph vertex containing a sequence of bases and a unique ID that
@@ -57,7 +56,7 @@ public final class SeqVertex extends BaseVertex {
      * @return
      */
     @Override
-    public boolean equals(final Object o) { return o == this; };
+    public boolean equals(final Object o) { return o == this; }
 
     @Override
     public int hashCode() {

@@ -140,7 +140,7 @@ public final class Kmer {
 
     @Override
     public String toString() {
-        return "Kmer{" + new String(bases,start,length) + "}";
+        return "Kmer{" + new String(bases,start,length) + '}';
     }
 
     @Override

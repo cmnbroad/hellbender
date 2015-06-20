@@ -53,7 +53,7 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
      *
      * @return never {@code null}.
      */
-    public byte[] bases() {
+    public final byte[] bases() {
         if (bases != null) return bases;
         final KBestHaplotype tail = tail();
         final SeqVertex head = head();
@@ -75,11 +75,14 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
      *
      * @return never {@code null}.
      */
-    public Haplotype haplotype() {
-        if (haplotype != null) return haplotype;
+    public final Haplotype haplotype() {
+        if (haplotype != null) {
+            return haplotype;
+        }
         haplotype = new Haplotype(bases(),isReference());
-        if (score() > 0)
+        if (score() > 0) {
             throw new IllegalStateException("score cannot be greater than 0: " + score());
+        }
         haplotype.setScore(score());
         return haplotype;
     }
@@ -89,12 +92,12 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
      *
      * @return never {@code null}, although perhaps a zero-length path (only one vertex).
      */
-    public Path<SeqVertex,BaseEdge> path() {
+    public final Path<SeqVertex,BaseEdge> path() {
         if (path != null) return path;
         final KBestHaplotype tail = tail();
-        if (tail == null)
-            path = new Path<>(head(),graph());
-        else {
+        if (tail == null) {
+            path = new Path<>(head(), graph());
+        } else {
             final Path<SeqVertex,BaseEdge> tailPath = tail.path();
             path = new Path<>(graph().getEdge(head(),tailPath.getFirstVertex()),tailPath);
         }
@@ -109,24 +112,27 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
      * if {@code other}'s score is larger.
      */
     @Override
-    public int compareTo(final KBestHaplotype other) {
+    public final int compareTo(final KBestHaplotype other) {
         Utils.nonNull(other, "the other object cannot be null");
         return -1 * Double.compare(score(), other.score());
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return haplotype().hashCode();
     }
 
     @Override
-    public boolean equals(final Object other) {
-        return other == null ? false: (other instanceof KBestHaplotype ? equals((KBestHaplotype)other) : false);
+    public final boolean equals(final Object other) {
+        if (!(other instanceof KBestHaplotype)) {
+            return false;
+        }
+        return equals((KBestHaplotype) other);
     }
 
     @Override
-    public String toString() {
-        return haplotype().toString() + " Score = "  + score();
+    public final String toString() {
+        return haplotype() + " Score = "  + score();
     }
 
     /**
@@ -138,7 +144,7 @@ public abstract class KBestHaplotype implements Comparable<KBestHaplotype> {
      *
      * @return {@code true} iff both haplotypes are the same (considering the ref state).
      */
-    protected boolean equals(final KBestHaplotype other) {
+    private boolean equals(final KBestHaplotype other) {
        return haplotype().equals(other.haplotype(),false);
     }
 

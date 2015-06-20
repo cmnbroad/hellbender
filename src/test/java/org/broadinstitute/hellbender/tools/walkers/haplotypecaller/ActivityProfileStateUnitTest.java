@@ -18,7 +18,7 @@ public final class ActivityProfileStateUnitTest {
     private GenomeLocParser genomeLocParser;
 
     @BeforeClass
-    public void init() throws FileNotFoundException {
+    public void init() {
         // sequence
         final SAMFileHeader header = ArtificialSAMUtils.createArtificialSamHeader(1, 1, 100);
         genomeLocParser = new GenomeLocParser(header.getSequenceDictionary());
@@ -54,9 +54,9 @@ public final class ActivityProfileStateUnitTest {
         Assert.assertEquals(apr.getLoc(), loc);
         Assert.assertEquals(apr.getOffset(loc), 0);
         Assert.assertNotNull(apr.toString());
-        Assert.assertEquals(apr.isActiveProb, prob);
-        Assert.assertEquals(apr.resultState, maybeState == null ? ActivityProfileState.Type.NONE : maybeState);
-        Assert.assertEquals(apr.resultValue, maybeState == null ? null : maybeNumber);
+        Assert.assertEquals(apr.isActiveProb(), prob);
+        Assert.assertEquals(apr.getResultState(), maybeState == null ? ActivityProfileState.Type.NONE : maybeState);
+        Assert.assertEquals(apr.getResultValue(), maybeState == null ? null : maybeNumber);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

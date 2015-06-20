@@ -42,25 +42,23 @@ public final class ReadThreadingAssembler {
      * If false, we will only write out a region around the reference source
      */
     private static final boolean PRINT_FULL_GRAPH_FOR_DEBUGGING = true;
-    public static final byte DEFAULT_MIN_BASE_QUALITY_TO_USE = (byte) 10;
+    private static final byte DEFAULT_MIN_BASE_QUALITY_TO_USE = (byte) 10;
     private static final int MIN_HAPLOTYPE_REFERENCE_LENGTH = 30;
 
-    private boolean debug = false;
-    private boolean allowCyclesInKmerGraphToGeneratePaths = false;
+    private final boolean debug = false;
     private boolean debugGraphTransformations = false;
     private boolean recoverDanglingBranches = true;
-    private int minDanglingBranchLength = 0;
+    private final int minDanglingBranchLength = 0;
 
-    private byte minBaseQualityToUseInAssembly = DEFAULT_MIN_BASE_QUALITY_TO_USE;
+    private final byte minBaseQualityToUseInAssembly = DEFAULT_MIN_BASE_QUALITY_TO_USE;
     private int pruneFactor = 2;
-    private boolean errorCorrectKmers = false;
 
-    private PrintStream graphWriter = null;
+    private final PrintStream graphWriter = null;
 
     /**
      *  @param numBestHaplotypesPerGraph the number of haplotypes to generate for each assembled graph
      */
-    public ReadThreadingAssembler(final int maxAllowedPathsForReadThreadingAssembler, final List<Integer> kmerSizes, final boolean dontIncreaseKmerSizesForCycles, final boolean allowNonUniqueKmersInRef, final int numPruningSamples) {
+    private ReadThreadingAssembler(final int maxAllowedPathsForReadThreadingAssembler, final List<Integer> kmerSizes, final boolean dontIncreaseKmerSizesForCycles, final boolean allowNonUniqueKmersInRef, final int numPruningSamples) {
         if ( maxAllowedPathsForReadThreadingAssembler < 1 ) throw new IllegalArgumentException("numBestHaplotypesPerGraph should be >= 1 but got " + maxAllowedPathsForReadThreadingAssembler);
         this.kmerSizes = kmerSizes;
         this.dontIncreaseKmerSizesForCycles = dontIncreaseKmerSizesForCycles;
@@ -137,7 +135,7 @@ public final class ReadThreadingAssembler {
 
         }
 
-        findBestPaths (nonRefGraphs, refHaplotype, refLoc, activeRegionExtendedLocation, assemblyResultByGraph, resultSet);
+        findBestPaths(nonRefGraphs, refHaplotype, refLoc, activeRegionExtendedLocation, assemblyResultByGraph, resultSet);
 
         // print the graphs if the appropriate debug option has been turned on
         if ( graphWriter != null ) { printGraphs(nonRefGraphs); }
@@ -145,13 +143,13 @@ public final class ReadThreadingAssembler {
         return resultSet;
     }
 
-    private List<Haplotype> findBestPaths(final List<SeqGraph> graphs, final Haplotype refHaplotype, final GenomeLoc refLoc, final GenomeLoc activeRegionWindow,
+    private List<Haplotype> findBestPaths(final Collection<SeqGraph> graphs, final Haplotype refHaplotype, final GenomeLoc refLoc, final GenomeLoc activeRegionWindow,
                                             final Map<SeqGraph,AssemblyResult> assemblyResultByGraph, final AssemblyResultSet assemblyResultSet) {
         // add the reference haplotype separately from all the others to ensure that it is present in the list of haplotypes
         final Set<Haplotype> returnHaplotypes = new LinkedHashSet<>();
 
         final int activeRegionStart = refHaplotype.getAlignmentStartHapwrtRef();
-        final ArrayList<KBestHaplotypeFinder> finders = new ArrayList<>(graphs.size());
+        final Collection<KBestHaplotypeFinder> finders = new ArrayList<>(graphs.size());
         int failedCigars = 0;
 
         for( final SeqGraph graph : graphs ) {
@@ -237,7 +235,7 @@ public final class ReadThreadingAssembler {
      * @return  true if we should skip over this path
      */
     private static boolean pathIsTooDivergentFromReference(final Cigar c) {
-        return c.getCigarElements().stream().anyMatch(ce -> ce.getOperator().equals(CigarOperator.N));
+        return c.getCigarElements().stream().anyMatch(ce -> ce.getOperator() == CigarOperator.N);
     }
 
     /**
@@ -324,12 +322,12 @@ public final class ReadThreadingAssembler {
 
     /**
      * Print the generated graphs to the graphWriter
-     * @param graphs a non-null list of graphs to print out
+     * @param graphs a non-null collection of graphs to print out
      */
-    private void printGraphs(final List<SeqGraph> graphs) {
-        final int writeFirstGraphWithSizeSmallerThan = 50;
+    private void printGraphs(final Iterable<SeqGraph> graphs) {
 
         graphWriter.println("digraph assemblyGraphs {");
+        final int writeFirstGraphWithSizeSmallerThan = 50;
         for( final SeqGraph graph : graphs ) {
             if ( debugGraphTransformations && graph.getKmerSize() >= writeFirstGraphWithSizeSmallerThan ) {
                 logger.info("Skipping writing of graph with kmersize " + graph.getKmerSize());
@@ -346,7 +344,7 @@ public final class ReadThreadingAssembler {
         graphWriter.println("}");
     }
 
-    private static void addResult(final List<AssemblyResult> results, final AssemblyResult maybeNullResult) {
+    private static void addResult(final Collection<AssemblyResult> results, final AssemblyResult maybeNullResult) {
         if ( maybeNullResult != null ) {
             results.add(maybeNullResult);
         }
@@ -396,10 +394,10 @@ public final class ReadThreadingAssembler {
      * @param allowNonUniqueKmersInRef if true, do not fail if the reference has non-unique kmers
      * @return sequence graph or null if one could not be created (e.g. because it contains cycles or too many paths or is low complexity)
      */
-    private AssemblyResult createGraph(final List<SAMRecord> reads,
+    private AssemblyResult createGraph(final Iterable<SAMRecord> reads,
                                          final Haplotype refHaplotype,
                                          final int kmerSize,
-                                         final List<Haplotype> activeAlleleHaplotypes,
+                                         final Iterable<Haplotype> activeAlleleHaplotypes,
                                          final boolean allowLowComplexityGraphs,
                                          final boolean allowNonUniqueKmersInRef) {
         if ( refHaplotype.length() < kmerSize ) {
@@ -480,8 +478,7 @@ public final class ReadThreadingAssembler {
 
         final AssemblyResult cleaned = cleanupSeqGraph(initialSeqGraph);
         final AssemblyResult.Status status = cleaned.getStatus();
-        final AssemblyResult result = new AssemblyResult(status, cleaned.getGraph(), rtgraph);
-        return result;
+        return new AssemblyResult(status, cleaned.getGraph(), rtgraph);
     }
 
     @Override

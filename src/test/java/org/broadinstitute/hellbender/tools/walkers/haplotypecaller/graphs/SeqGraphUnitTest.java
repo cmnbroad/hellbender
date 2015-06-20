@@ -273,7 +273,7 @@ public final class SeqGraphUnitTest extends BaseTest {
 
     @Test(dataProvider = "MergingData", enabled = !DEBUG)
     public void testMerging(final SeqGraph graph, final SeqGraph expected) {
-        final SeqGraph merged = (SeqGraph)graph.clone();
+        final SeqGraph merged = graph.clone();
         merged.simplifyGraph(1);
         try {
             Assert.assertTrue(SeqGraph.graphEquals(merged, expected));

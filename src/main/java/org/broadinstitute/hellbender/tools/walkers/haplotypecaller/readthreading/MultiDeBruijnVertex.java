@@ -5,13 +5,12 @@ import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A DeBruijnVertex that supports multiple copies of the same kmer
  */
 public final class MultiDeBruijnVertex extends BaseVertex {
-    private final static byte[][] sufficesAsByteArray = new byte[256][];
+    private static final byte[][] sufficesAsByteArray = new byte[Byte.MAX_VALUE - Byte.MIN_VALUE + 1][];
     static {
         for ( int i = 0; i < sufficesAsByteArray.length; i++ ) {
             sufficesAsByteArray[i] = new byte[]{(byte) (i & 0xFF)};
@@ -82,7 +81,11 @@ public final class MultiDeBruijnVertex extends BaseVertex {
 
     @Override
     public String additionalInfo() {
-        return super.additionalInfo() + (KEEP_TRACK_OF_READS ? (! reads.contains("ref") ? "__" + Utils.join(",", reads) : "") : "");
+        if (reads.contains("ref")) {
+            return super.additionalInfo();
+        } else {
+            return super.additionalInfo() + (KEEP_TRACK_OF_READS ? "__" + Utils.join(",", reads) : "");
+        }
     }
 
     /**

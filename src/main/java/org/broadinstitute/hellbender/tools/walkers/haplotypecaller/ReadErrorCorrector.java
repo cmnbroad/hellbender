@@ -52,14 +52,14 @@ import java.util.*;
  *
 */
 public final class ReadErrorCorrector {
-    private final static Logger logger = LogManager.getLogger(ReadErrorCorrector.class);
+    private static final Logger logger = LogManager.getLogger(ReadErrorCorrector.class);
     /**
      * A map of for each kmer to its num occurrences in addKmers
      */
-    private KMerCounter countsByKMer;
+    private final KMerCounter countsByKMer;
 
-    private Map<Kmer,Kmer> kmerCorrectionMap = new HashMap<>();
-    private Map<Kmer,Pair<int[],byte[]>> kmerDifferingBases = new HashMap<>();
+    private final Map<Kmer,Kmer> kmerCorrectionMap = new HashMap<>();
+    private final Map<Kmer,Pair<int[],byte[]>> kmerDifferingBases = new HashMap<>();
     private final int kmerLength;
     private final boolean debug;
     private final boolean trimLowQualityBases;
@@ -89,7 +89,7 @@ public final class ReadErrorCorrector {
      * @param maxMismatchesToCorrect e >= 0
      * @param qualityOfCorrectedBases  Bases to be corrected will be assigned this quality
      */
-    public ReadErrorCorrector(final int kmerLength,
+    private ReadErrorCorrector(final int kmerLength,
                               final int maxMismatchesToCorrect,
                               final int maxObservationsForKmerToBeCorrectable,
                               final byte qualityOfCorrectedBases,
@@ -133,7 +133,7 @@ public final class ReadErrorCorrector {
     * Main entry routine to add all kmers in a read to the read map counter
     * @param read                        Read to add bases
     */
-    void addReadKmers(final SAMRecord read) {
+    private void addReadKmers(final SAMRecord read) {
         if (DONT_CORRECT_IN_LONG_HOMOPOLYMERS && maxHomopolymerLengthInRegion > MAX_HOMOPOLYMER_THRESHOLD) {
             return;
         }
@@ -263,7 +263,7 @@ public final class ReadErrorCorrector {
      * For each read in list, its constituent kmers will be logged in our kmer table.
      * @param reads
      */
-    public void addReadsToKmers(final Collection<SAMRecord> reads) {
+    public void addReadsToKmers(final Iterable<SAMRecord> reads) {
         for (final SAMRecord read: reads) {
             addReadKmers(read);
         }
@@ -360,7 +360,6 @@ public final class ReadErrorCorrector {
      */
     private static int computeMaxHLen(final byte[] fullReferenceWithPadding) {
         int leftRun = 1;
-        int maxRun = 1;
         for ( int i = 1; i < fullReferenceWithPadding.length; i++) {
             if ( fullReferenceWithPadding[i] == fullReferenceWithPadding[i-1] ) {
                 leftRun++;
@@ -368,6 +367,7 @@ public final class ReadErrorCorrector {
                 leftRun = 1;
             }
         }
+        int maxRun = 1;
         if (leftRun > maxRun) {
             maxRun = leftRun;
         }

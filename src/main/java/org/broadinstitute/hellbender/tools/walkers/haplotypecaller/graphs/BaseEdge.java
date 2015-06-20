@@ -2,7 +2,6 @@ package org.broadinstitute.hellbender.tools.walkers.haplotypecaller.graphs;
 
 import org.broadinstitute.hellbender.utils.Utils;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
 

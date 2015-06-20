@@ -178,7 +178,7 @@ public final class AssemblyRegion {
      * @param extensionSize the extensionSize size we want for the newly trimmed active region
      * @return a non-null, empty active region
      */
-    public AssemblyRegion trim(final GenomeLoc span, final int extensionSize) {
+    private AssemblyRegion trim(final GenomeLoc span, final int extensionSize) {
         Utils.nonNull(span, "Active region extent cannot be null");
         if ( extensionSize < 0) throw new IllegalArgumentException("the extensionSize size must be 0 or greater");
         final int extendStart = Math.max(1,span.getStart() - extensionSize);
@@ -222,7 +222,7 @@ public final class AssemblyRegion {
      * @param span the new extend of the active region we want
      * @return a non-null, empty active region
      */
-    public AssemblyRegion trim(final GenomeLoc span, final GenomeLoc extendedSpan) {
+    private AssemblyRegion trim(final GenomeLoc span, final GenomeLoc extendedSpan) {
         Utils.nonNull(span, "Active region extent cannot be null");
         Utils.nonNull(extendedSpan, "Active region extended span cannot be null");
         if ( ! extendedSpan.containsP(span)) {
@@ -259,7 +259,7 @@ public final class AssemblyRegion {
      * @param read the read we want to test
      * @return true if read can be added to this region, false otherwise
      */
-    public boolean readOverlapsRegion(final SAMRecord read) {
+    private boolean readOverlapsRegion(final SAMRecord read) {
         final GenomeLoc readLoc = genomeLocParser.createGenomeLoc( read );
         return readLoc.overlapsP(extendedLoc);
     }
@@ -314,7 +314,7 @@ public final class AssemblyRegion {
      * Remove all of the reads in readsToRemove from this active region
      * @param readsToRemove the set of reads we want to remove
      */
-    public void removeAll( final Set<SAMRecord> readsToRemove ) {
+    public void removeAll( final Collection<SAMRecord> readsToRemove ) {
         final Iterator<SAMRecord> it = reads.iterator();
         spanIncludingReads = extendedLoc;
         while ( it.hasNext() ) {
@@ -401,7 +401,7 @@ public final class AssemblyRegion {
      * @param genomeLoc a non-null genome loc indicating the base span of the bp we'd like to get the reference for
      * @return a non-null array of bytes holding the reference bases in referenceReader
      */
-    public byte[] getReference( final IndexedFastaSequenceFile referenceReader, final int padding, final GenomeLoc genomeLoc ) {
+    private static byte[] getReference(final IndexedFastaSequenceFile referenceReader, final int padding, final GenomeLoc genomeLoc) {
         Utils.nonNull(referenceReader, "referenceReader cannot be null");
         Utils.nonNull(genomeLoc, "genomeLoc cannot be null");
         if ( padding < 0 ) throw new IllegalArgumentException("padding must be a positive integer but got " + padding);

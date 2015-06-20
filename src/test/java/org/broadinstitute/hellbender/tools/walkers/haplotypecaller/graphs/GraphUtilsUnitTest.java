@@ -65,7 +65,7 @@ public final class GraphUtilsUnitTest extends BaseTest {
     @Test(dataProvider = "findLongestUniqueMatchData")
     public void testfindLongestUniqueMatch(final String seq, final String kmer, final int start, final int length) {
         // adaptor this code to do whatever testing you want given the arguments start and size
-        final PrimitivePair.Int actual = GraphUtils.findLongestUniqueSuffixMatch(seq.getBytes(), kmer.getBytes());
+        final PrimitivePair.Int actual = findLongestUniqueSuffixMatch(seq.getBytes(), kmer.getBytes());
         if ( start == -1 )
             Assert.assertNull(actual);
         else {
@@ -73,6 +73,41 @@ public final class GraphUtilsUnitTest extends BaseTest {
             Assert.assertEquals(actual.first, start);
             Assert.assertEquals(actual.second, length);
         }
+    }
+
+    /**
+     * Find the ending position of the longest uniquely matching
+     * run of bases of kmer in seq.
+     *
+     * for example, if seq = ACGT and kmer is NAC, this function returns 1,2 as we have the following
+     * match:
+     *
+     *  0123
+     * .ACGT
+     * NAC..
+     *
+     * @param seq a non-null sequence of bytes
+     * @param kmer a non-null kmer
+     * @return the ending position and length where kmer matches uniquely in sequence, or null if no
+     *         unique longest match can be found
+     */
+    private static PrimitivePair.Int findLongestUniqueSuffixMatch(final byte[] seq, final byte[] kmer) {
+        int longestPos = -1;
+        int length = 0;
+        boolean foundDup = false;
+
+        for ( int i = 0; i < seq.length; i++ ) {
+            final int matchSize = GraphUtils.longestSuffixMatch(seq, kmer, i);
+            if ( matchSize > length ) {
+                longestPos = i;
+                length = matchSize;
+                foundDup = false;
+            } else if ( matchSize == length ) {
+                foundDup = true;
+            }
+        }
+
+        return foundDup ? null : new PrimitivePair.Int(longestPos, length);
     }
 
     @Test

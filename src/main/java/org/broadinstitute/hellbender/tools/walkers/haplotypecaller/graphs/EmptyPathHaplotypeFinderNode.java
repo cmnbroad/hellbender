@@ -24,7 +24,7 @@ final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
      * @param graph the search graph.
      * @param vertex the source and sink vertex of the only solution returned by this finder.
      */
-    public EmptyPathHaplotypeFinderNode(final SeqGraph graph, final SeqVertex vertex) {
+    EmptyPathHaplotypeFinderNode(final SeqGraph graph, final SeqVertex vertex) {
         singleHaplotypePath = new MyBestHaplotypePath(graph,vertex);
     }
 
@@ -102,7 +102,7 @@ final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
          * @param graph the search graph.
          * @param vertex the source and sink vertex of the only solution returned by the outer finder.
          */
-        public MyBestHaplotypePath(final SeqGraph graph, final SeqVertex vertex) {
+        MyBestHaplotypePath(final SeqGraph graph, final SeqVertex vertex) {
             this.vertex = vertex;
             this.graph = graph;
         }
@@ -134,7 +134,10 @@ final class EmptyPathHaplotypeFinderNode implements KBestSubHaplotypeFinder {
 
         @Override
         public boolean isReference() {
-            return (isReference != null) ? isReference: (isReference = graph.isReferenceNode(vertex));
+            if (isReference == null) {
+                isReference = graph.isReferenceNode(vertex);
+            }
+            return isReference;
         }
     }
 }
